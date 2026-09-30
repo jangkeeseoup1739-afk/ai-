@@ -226,11 +226,22 @@ python -m reels broll place  --name 릴스_러프컷   # 세로로 잘라 트랙
 
 ## 테스트
 
-whisper 없이 가짜 받아쓰기로 판정·자막·초안 생성까지 전부 돈다.
+whisper와 네트워크 없이 돈다. 합성 영상과 가짜 받아쓰기를 쓴다.
+ffmpeg는 `imageio-ffmpeg`가 정적 바이너리를 들고 오고, `libmediainfo`는
+`pymediainfo` 휠에 들어 있어 따로 설치할 게 없다.
 
 ```bash
-python reels/tests/test_pipeline.py   # 판정·자막·초안 생성
-python reels/tests/test_sfx.py        # 효과음 배치·Openverse 파싱·출처 문구
-python reels/tests/test_transitions.py # 전환 지점 선정·주입·중복 방지
-python reels/tests/test_broll.py       # 자료 화면 선정·차단·세로 변환·배치
+pip install -r reels/requirements-dev.txt
+
+python reels/tests/test_pipeline.py     # 침묵 처리·판정·자막·초안 생성
+python reels/tests/test_sfx.py          # 효과음 배치·Openverse 파싱·출처 문구
+python reels/tests/test_transitions.py  # 전환 지점 선정·주입·중복 방지
+python reels/tests/test_broll.py        # 자료 화면 선정·차단·세로 변환·배치
 ```
+
+기존 초안을 고치는 테스트는 본 영상·자막 트랙이 그대로 보존되는지,
+레이어 순서가 맞는지까지 확인한다.
+
+GitHub Actions에서 Python 3.10 / 3.11 / 3.12 / 3.13 네 버전으로 돌린다
+(`.github/workflows/tests.yml`). `pycapcut`은 0.0.x라 의존하는 내부 구조가
+바뀔 수 있어 `requirements-dev.txt`에서 버전을 고정했다.
