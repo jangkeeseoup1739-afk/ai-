@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import clean, draft, subtitles, transcribe
+from . import clean, draft, sfx, subtitles, transcribe
 from .util import ensure_dir
 
 
@@ -106,6 +106,47 @@ def cmd_all(args) -> int:
     return 0
 
 
+def cmd_sfx(args) -> int:
+    content = sfx.draft_content_path(Path(args.draft_root), args.name)
+    sentences = sfx.read_sentences(content)
+    if not sentences:
+        raise SystemExit("초안에서 문장을 읽지 못했습니다.")
+    total = max(s["end"] for s in sentences)
+    print(f"문장 {len(sentences)}개 / {total:.1f}초", file=sys.stderr)
+
+    picks = sfx.choose(sentences, per_30s=args.per_30s,
+                       min_per_30s=args.min_per_30s, max_per_30s=args.max_per_30s,
+                       spacing=args.spacing)
+    if not picks:
+        raise SystemExit("넣을 자리를 찾지 못했습니다.")
+    print(f"효과음 {len(picks)}개 배치 예정", file=sys.stderr)
+
+    picks = sfx.resolve(picks, sfx_dir=Path(args.sfx_dir).expanduser(),
+                        cache=Path(args.cache).expanduser(),
+                        allow_download=not args.no_download)
+
+    print("\n## 넣은 효과음\n")
+    print(sfx.table(picks))
+
+    if args.dry_run:
+        print("\n--dry-run 이라 초안은 건드리지 않았습니다.", file=sys.stderr)
+        return 0
+
+    added = sfx.attach(content, picks, volume=args.volume,
+                       track_name=args.track_name)
+    credit = sfx.attribution(picks)
+    print(f"\n'{args.track_name}' 트랙에 {added}개를 볼륨 "
+          f"{int(args.volume * 100)}%로 넣고 저장했습니다.")
+    print(f"원본 백업: {content.with_suffix('.json.bak')}")
+    if credit:
+        print("\n## 캡션에 붙일 출처 문구 (CC BY)\n")
+        print(credit)
+    else:
+        print("\nCC BY 소리는 없어서 출처 표기는 필요 없습니다.")
+    print("\n캡컷을 다시 열면 효과음 트랙이 보입니다.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="reels", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -113,6 +154,25 @@ def main(argv: list[str] | None = None) -> int:
     p_all = sub.add_parser("all", help="전체 파이프라인 실행")
     _add_common(p_all)
     p_all.set_defaults(func=cmd_all)
+    p_sfx = sub.add_parser("sfx", help="기존 초안에 효과음 트랙 추가")
+    p_sfx.add_argument("--name", default="릴스_러프컷", help="캡컷 초안 이름")
+    p_sfx.add_argument("--draft-root", default=str(draft.DEFAULT_DRAFT_ROOT))
+    p_sfx.add_argument("--sfx-dir", default=str(sfx.DEFAULT_SFX_DIR),
+                       help="내 효과음 폴더 (여기를 먼저 뒤진다)")
+    p_sfx.add_argument("--cache", default=str(sfx.DEFAULT_CACHE),
+                       help="내려받은 소리를 두는 곳")
+    p_sfx.add_argument("--track-name", default="효과음")
+    p_sfx.add_argument("--volume", type=float, default=0.5)
+    p_sfx.add_argument("--per-30s", type=float, default=6.0)
+    p_sfx.add_argument("--min-per-30s", type=float, default=4.0)
+    p_sfx.add_argument("--max-per-30s", type=float, default=8.0)
+    p_sfx.add_argument("--spacing", type=float, default=sfx.MIN_SPACING_SEC,
+                       help="효과음 사이 최소 간격(초)")
+    p_sfx.add_argument("--no-download", action="store_true",
+                       help="Openverse에서 받지 않고 로컬 파일만 쓴다")
+    p_sfx.add_argument("--dry-run", action="store_true",
+                       help="초안을 고치지 않고 배치안만 보여준다")
+    p_sfx.set_defaults(func=cmd_sfx)
     args = parser.parse_args(argv)
     return args.func(args)
 
