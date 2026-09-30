@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import clean, draft, sfx, subtitles, transcribe, transitions
+from . import broll, clean, draft, sfx, subtitles, transcribe, transitions
 from .util import ensure_dir
 
 
@@ -179,6 +179,55 @@ def cmd_transitions(args) -> int:
     return 0
 
 
+def cmd_broll(args) -> int:
+    content = sfx.draft_content_path(Path(args.draft_root), args.name)
+    out_dir = Path(args.dir).expanduser()
+
+    if args.stage == "plan":
+        sentences = sfx.read_sentences(content)
+        shots = broll.plan(sentences, max_picks=args.max_picks,
+                           min_picks=args.min_picks)
+        if not shots:
+            raise SystemExit("자료 화면이 필요한 문장을 찾지 못했습니다.")
+        path = broll.save_plan(shots, out_dir)
+        live = [s for s in shots if not s.blocked]
+        print("\n## 보여줄 화면 목록\n")
+        print(broll.table(shots))
+        blank = [s for s in live if not s.url]
+        print(f"\n{len(live)}곳을 골랐습니다. 목록: {path}")
+        if blank:
+            print(f"주소가 빈 곳이 {len(blank)}개 있습니다. "
+                  "plan.json 의 url 을 채워주세요.")
+        print("\n이대로 진행해도 될까요? 괜찮으면:")
+        print(f"  python -m reels broll record --name {args.name}")
+        return 0
+
+    shots = broll.load_plan(out_dir / "plan.json")
+
+    if args.stage == "record":
+        print(f"{out_dir} 에 녹화합니다. "
+              "화면 기록 권한이 필요하고, 스크롤에는 손쉬운 사용 권한이 필요합니다.")
+        done = broll.record(shots, out_dir, settle=args.settle, rect=args.rect,
+                            scroll=not args.no_scroll, dry_run=args.dry_run)
+        if args.dry_run:
+            return 0
+        print(f"\n{len(done)}개를 녹화했습니다. 다음:")
+        print(f"  python -m reels broll place --name {args.name}")
+        return 0
+
+    if args.stage == "place":
+        added = broll.place(content, shots, out_dir, crop_mode=args.crop_mode,
+                            crop_x=args.crop_x)
+        print("\n## 올린 자료 화면\n")
+        print(broll.table([s for s in shots if not s.blocked]))
+        print(f"\n'{broll.TRACK_NAME}' 트랙에 {added}개를 올렸습니다 (화면 위쪽 절반).")
+        print(f"원본 백업: {content.with_suffix('.json.bak')}")
+        print("\n캡컷을 다시 열어주세요.")
+        return 0
+
+    raise SystemExit(f"알 수 없는 단계: {args.stage}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="reels", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -219,6 +268,25 @@ def main(argv: list[str] | None = None) -> int:
                       help="이미 전환이 있어도 덧붙인다")
     p_tr.add_argument("--dry-run", action="store_true")
     p_tr.set_defaults(func=cmd_transitions)
+    p_br = sub.add_parser("broll", help="배경 자료 화면 (plan / record / place)")
+    p_br.add_argument("stage", choices=["plan", "record", "place"])
+    p_br.add_argument("--name", default="릴스_러프컷", help="캡컷 초안 이름")
+    p_br.add_argument("--draft-root", default=str(draft.DEFAULT_DRAFT_ROOT))
+    p_br.add_argument("--dir", default=str(broll.DEFAULT_DIR),
+                      help="녹화분을 두는 폴더")
+    p_br.add_argument("--max-picks", type=int, default=broll.MAX_PICKS)
+    p_br.add_argument("--min-picks", type=int, default=broll.MIN_PICKS)
+    p_br.add_argument("--settle", type=float, default=2.5,
+                      help="페이지가 뜨고 녹화까지 기다릴 시간(초)")
+    p_br.add_argument("--rect", default="", help="녹화 영역 x,y,w,h (기본: 전체 화면)")
+    p_br.add_argument("--no-scroll", action="store_true",
+                      help="녹화 중 스크롤하지 않음")
+    p_br.add_argument("--crop-mode", default="cover", choices=["cover", "fit"])
+    p_br.add_argument("--crop-x", type=float, default=0.5,
+                      help="cover로 자를 때 가로 위치 (0=왼쪽, 1=오른쪽)")
+    p_br.add_argument("--dry-run", action="store_true",
+                      help="record: 실행할 명령만 출력")
+    p_br.set_defaults(func=cmd_broll)
     args = parser.parse_args(argv)
     return args.func(args)
 

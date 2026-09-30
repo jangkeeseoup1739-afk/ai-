@@ -181,6 +181,49 @@ Signal_Glitch_2` 순서로 돌려 쓰므로 같은 전환이 연달아 나오지
 > 싱크가 조금 밀릴 수 있다. 초안을 열어 컷 경계를 한 번 확인할 것.
 > 문제가 있으면 `.bak`을 되돌리면 된다.
 
+## 배경 자료 화면
+
+세 단계로 나뉜다. 가운데 `record`만 macOS에서 돌아간다.
+
+```bash
+python -m reels broll plan   --name 릴스_러프컷   # 보여줄 화면 목록 (확인용)
+$EDITOR ~/릴스자료/plan.json                      # 빈 url 채우기
+python -m reels broll record --name 릴스_러프컷   # 크롬으로 열고 녹화
+python -m reels broll place  --name 릴스_러프컷   # 세로로 잘라 트랙에 올림
+```
+
+### plan
+
+사이트·앱·숫자·결과물을 말하는 문장에서 **3~5곳**을 고른다. 우선순위는
+주소를 직접 말한 곳 → 아는 서비스 이름 → 숫자 → 결과물 순이다.
+아는 서비스는 주소를 자동으로 채운다(`KNOWN_SITES`). 숫자·결과물은 보여줄
+화면을 알 수 없으므로 `plan.json`의 `url`을 직접 채워야 한다.
+길이는 문장 길이에 맞춰 3~5초.
+
+**로그인·결제·개인정보 화면은 여기서 막는다.** 주소에 `/login`, `/checkout`,
+`/billing`, `/account`, `mail.` 등이 들어가거나, 문장에 `로그인 / 결제 /
+비밀번호 / 계좌 / 주민등록`이 나오면 후보에서 빼고 표에 이유를 적는다.
+`record`에서도 한 번 더 막는다.
+
+### record
+
+`open -a "Google Chrome" --new <url>` 로 열고, 페이지가 뜰 때까지 기다린 뒤
+`screencapture -v -V <초> -x` 로 녹화하며 아래 화살표를 눌러 천천히 스크롤한다.
+`~/릴스자료`에 저장.
+
+- **화면 기록 권한**이 필요하다 (시스템 설정 → 개인정보 보호 및 보안 → 화면 기록).
+- 스크롤에는 **손쉬운 사용 권한**이 필요하다. 없으면 스크롤만 조용히 포기하고 녹화는 계속한다.
+- `--dry-run`으로 실행할 명령만 볼 수 있다. `--no-scroll`, `--rect x,y,w,h`, `--settle 초` 지원.
+- 녹화 전에 비밀번호 관리자·메일·알림을 닫아둘 것.
+
+### place
+
+녹화분을 `1080x960`(세로 캔버스의 위쪽 절반)으로 잘라 `자료 화면` 영상 트랙에
+올린다. 레이어는 **본 영상 위, 자막 아래**. 위치는 `transform_y=0.5`.
+
+`--crop-mode cover`(기본, 가운데를 채워 자름) / `fit`(전체를 넣고 위아래 여백).
+`--crop-x 0`이면 왼쪽 기준으로 자른다(웹 내용이 왼쪽에 몰린 경우).
+
 ## 테스트
 
 whisper 없이 가짜 받아쓰기로 판정·자막·초안 생성까지 전부 돈다.
@@ -189,4 +232,5 @@ whisper 없이 가짜 받아쓰기로 판정·자막·초안 생성까지 전부
 python reels/tests/test_pipeline.py   # 판정·자막·초안 생성
 python reels/tests/test_sfx.py        # 효과음 배치·Openverse 파싱·출처 문구
 python reels/tests/test_transitions.py # 전환 지점 선정·주입·중복 방지
+python reels/tests/test_broll.py       # 자료 화면 선정·차단·세로 변환·배치
 ```
