@@ -2,7 +2,7 @@
 
 세 단계로 나뉜다.
   plan   - 자료 화면이 필요한 문장 3~5곳을 골라 목록을 보여준다 (사람 확인용)
-  record - 크롬으로 열고 screencapture로 녹화한다 (macOS 전용)
+  record - 크롬으로 열고 화면을 녹화한다 (윈도우: ffmpeg gdigrab, 맥: screencapture)
   place  - 녹화분을 세로로 잘라 "자료 화면" 트랙에 올린다
 
 로그인·결제·개인정보가 보이는 주소는 계획 단계에서 막고, 녹화도 거부한다.
@@ -17,6 +17,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from . import platforms
 from .util import SEC_US, ffmpeg_bin, run
 
 DEFAULT_DIR = Path("~/릴스자료").expanduser()
@@ -51,8 +52,8 @@ KNOWN_SITES: dict[str, str] = {
     "capcut": "https://www.capcut.com",
     "openverse": "https://openverse.org",
     "허깅페이스": "https://huggingface.co",
-    "홈브루": "https://brew.sh",
-    "homebrew": "https://brew.sh",
+    "윈겟": "https://learn.microsoft.com/windows/package-manager/winget/",
+    "winget": "https://learn.microsoft.com/windows/package-manager/winget/",
 }
 
 # 이런 주소는 찍지 않는다
@@ -123,7 +124,7 @@ def plan(sentences: list[dict], *, max_picks: int = MAX_PICKS,
             shot.block_reason = "개인정보가 보일 수 있는 내용"
         if not url:
             shot.note = "보여줄 주소를 직접 채워 넣어야 함"
-        shot.file = f"{shot.sentence_index:02d}-{kind}.mov"
+        shot.file = f"{shot.sentence_index:02d}-{kind}{platforms.RECORD_EXT}"
         cands.append(shot)
 
     picked = sorted([c for c in cands if not c.blocked],
@@ -172,18 +173,15 @@ def record_commands(shot: Shot, out_dir: Path, *, settle: float = 2.5,
                     rect: str = "") -> list[list[str]]:
     """실제로 실행할 명령들을 그대로 돌려준다 (검토·dry-run용)."""
     dest = Path(out_dir).expanduser() / shot.file
-    cap = ["screencapture", "-v", "-V", f"{shot.duration:.0f}", "-x"]
-    if rect:
-        cap += ["-R", rect]
-    cap.append(str(dest))
-    return [["open", "-a", "Google Chrome", "--new", shot.url], cap]
+    return [platforms.open_browser_cmd(shot.url),
+            platforms.record_cmd(dest, shot.duration, rect=rect,
+                                 ffmpeg=ffmpeg_bin())]
 
 
 def record(shots: list[Shot], out_dir: Path = DEFAULT_DIR, *,
            settle: float = 2.5, rect: str = "", scroll: bool = True,
            dry_run: bool = False) -> list[Shot]:
     """크롬으로 열고 녹화한다. 녹화 중 천천히 아래로 스크롤한다."""
-    import sys
 
     out_dir = Path(out_dir).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -204,18 +202,23 @@ def record(shots: list[Shot], out_dir: Path = DEFAULT_DIR, *,
             print(f"$ sleep {settle}")
             print("$ " + " ".join(cap_cmd))
             continue
-        if sys.platform != "darwin":
-            raise SystemExit("녹화는 macOS에서만 됩니다. --dry-run 으로 명령만 보세요.")
+        if not platforms.can_record():
+            raise SystemExit(
+                "이 운영체제에서는 자동 녹화를 지원하지 않습니다 (윈도우·맥만 가능).\n"
+                "--dry-run 으로 명령만 보거나, 직접 녹화한 파일을 "
+                f"{out_dir} 에 {shot.file} 이름으로 두면 place 가 씁니다.")
         run(open_cmd)
         time.sleep(settle)
         proc = subprocess.Popen(cap_cmd)
         if scroll:
             _scroll_while(proc, shot.duration)
         proc.wait()
-        dest = out_dir / shot.file
-        if not dest.exists():
-            print(f"  ! 녹화 파일이 없습니다: {dest} (화면 기록 권한 확인)")
+        dest = platforms.find_recording(out_dir, Path(shot.file).stem)
+        if dest is None:
+            print(f"  ! 녹화 파일이 없습니다: {out_dir / shot.file}")
+            print(f"    {platforms.record_permission_hint()}")
             continue
+        shot.file = dest.name
         done.append(shot)
         print(f"  · 녹화됨 {dest.name} ({shot.duration:.0f}초)")
     return done
@@ -224,15 +227,13 @@ def record(shots: list[Shot], out_dir: Path = DEFAULT_DIR, *,
 def _scroll_while(proc: subprocess.Popen, seconds: float,
                   step: float = 0.7) -> None:
     """녹화가 도는 동안 아래 화살표를 눌러 천천히 스크롤한다."""
+    cmd = platforms.scroll_cmd()
+    if not cmd:
+        return
     end = time.time() + seconds
     while time.time() < end and proc.poll() is None:
-        try:
-            subprocess.run(
-                ["osascript", "-e",
-                 'tell application "System Events" to key code 125'],
-                check=False, capture_output=True, timeout=3)
-        except Exception:
-            return      # 손쉬운 사용 권한이 없으면 조용히 스크롤만 포기
+        if not platforms.run_quiet(cmd):
+            return      # 권한이 없으면 조용히 스크롤만 포기하고 녹화는 계속
         time.sleep(step)
 
 
@@ -269,11 +270,11 @@ def place(content_path: Path, shots: list[Shot], src_dir: Path = DEFAULT_DIR, *,
     for s in shots:
         if s.blocked:
             continue
-        raw = src_dir / s.file
-        if not raw.exists():
-            print(f"  · 없음 {raw.name} — 건너뜁니다")
+        raw = platforms.find_recording(src_dir, Path(s.file).stem)
+        if raw is None:
+            print(f"  · 없음 {s.file} — 건너뜁니다")
             continue
-        vert = src_dir / (Path(s.file).stem + "_vert.mp4")
+        vert = src_dir / (raw.stem + "_vert.mp4")
         if not vert.exists():
             to_vertical(raw, vert, mode=crop_mode, crop_x=crop_x)
         usable.append((s, vert))

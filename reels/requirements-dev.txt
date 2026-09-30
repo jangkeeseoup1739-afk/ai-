@@ -1,8 +1,8 @@
 # 테스트를 돌리는 데 필요한 것들.
-# 맥에서 실제로 쓸 때는 reels/setup-mac.sh 가 pycapcut을 ~/.pycapcut 에 넣고
-# ffmpeg는 brew로 설치한다. 아래는 CI와 개발용이다.
+# 실제 편집에 쓰는 의존성은 reels/requirements.txt 에 있다.
+# faster-whisper 는 테스트에서 쓰지 않으므로(받아쓰기는 가짜 데이터로 대체) 빼둔다.
 
-# 캡컷 초안 생성. 0.0.x라 API가 깊게 바뀔 수 있어 고정한다.
+# 캡컷 초안 생성. 0.0.x라 내부 구조가 바뀔 수 있어 고정한다.
 pycapcut==0.0.3
 
 # ffmpeg 정적 바이너리 (테스트용 합성 영상 생성 / 세로 변환)

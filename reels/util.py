@@ -27,15 +27,11 @@ def ffmpeg_bin() -> str:
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
         pass
+    import sys
+
+    if sys.platform == "win32":
+        raise SystemExit("ffmpeg를 찾을 수 없습니다.  winget install Gyan.FFmpeg")
     raise SystemExit("ffmpeg를 찾을 수 없습니다.  brew install ffmpeg")
-
-
-def whisper_bin() -> str:
-    # whisper.cpp 최신 포뮬러는 whisper-cli, 구버전은 whisper-cpp / main
-    p = which_first("whisper-cli", "whisper-cpp", "whisper.cpp", "main")
-    if p:
-        return p
-    raise SystemExit("whisper-cli를 찾을 수 없습니다.  brew install whisper-cpp")
 
 
 def run(cmd: list[str], quiet: bool = False) -> None:

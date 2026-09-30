@@ -1,0 +1,8 @@
+# 실제로 편집을 돌리는 데 필요한 것들 (윈도우/맥 공통)
+#   pip install -r reels/requirements.txt
+
+# 캡컷 초안 생성. 0.0.x라 내부 구조가 바뀔 수 있어 고정한다.
+pycapcut==0.0.3
+
+# 받아쓰기. 영상 파일을 그대로 읽으므로 음성 추출이 따로 필요 없다.
+faster-whisper>=1.1
