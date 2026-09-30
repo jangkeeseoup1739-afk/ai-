@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import clean, draft, sfx, subtitles, transcribe
+from . import clean, draft, sfx, subtitles, transcribe, transitions
 from .util import ensure_dir
 
 
@@ -25,6 +25,8 @@ def _add_common(p: argparse.ArgumentParser) -> None:
     p.add_argument("--threads", type=int, default=0)
     p.add_argument("--beam", type=int, default=5)
     p.add_argument("--max-chars", type=int, default=12, help="자막 한 줄 글자 수")
+    p.add_argument("--max-silence", type=float, default=subtitles.MAX_SILENCE,
+                   help="구간 사이에 남길 침묵의 최대 길이(초)")
     p.add_argument("--name", default="릴스_러프컷", help="캡컷 초안 이름")
     p.add_argument("--draft-root", default=str(draft.DEFAULT_DRAFT_ROOT))
     p.add_argument("--width", type=int, default=1080)
@@ -84,7 +86,7 @@ def cmd_all(args) -> int:
         return 0
 
     print("[3/4] 자막 만드는 중...", file=sys.stderr)
-    timeline = subtitles.build_timeline(decisions)
+    timeline = subtitles.build_timeline(decisions, args.max_silence)
     if not timeline:
         raise SystemExit("남은 구간이 없습니다. 판정 기준을 완화해 보세요.")
     srt_path = subtitles.write_srt(timeline, work / "subtitle.srt", args.max_chars)
@@ -147,6 +149,36 @@ def cmd_sfx(args) -> int:
     return 0
 
 
+def cmd_transitions(args) -> int:
+    content = sfx.draft_content_path(Path(args.draft_root), args.name)
+    sentences = sfx.read_sentences(content)
+    points = transitions.find_points(
+        sentences, per_30s=args.per_30s, min_per_30s=args.min_per_30s,
+        max_per_30s=args.max_per_30s, spacing=args.spacing)
+    if not points:
+        raise SystemExit("이야기가 바뀌는 지점을 찾지 못했습니다. "
+                         "--per-30s 를 올리거나 직접 넣으세요.")
+    total = max(s["end"] for s in sentences)
+    print(f"문장 {len(sentences)}개 / {total:.1f}초 "
+          f"-> 전환 {len(points)}곳 (30초당 {len(points) / (total / 30):.1f}곳)",
+          file=sys.stderr)
+
+    if args.dry_run:
+        print("\n## 넣을 장면 전환\n")
+        print(transitions.table(points))
+        print("\n--dry-run 이라 초안은 건드리지 않았습니다.", file=sys.stderr)
+        return 0
+
+    added = transitions.apply(content, points, duration=args.duration,
+                              force=args.force)
+    print("\n## 넣은 장면 전환\n")
+    print(transitions.table(points))
+    print(f"\n{added}곳에 전환을 넣고 저장했습니다.")
+    print(f"원본 백업: {content.with_suffix('.json.bak')}")
+    print("\n캡컷을 다시 열어서 컷 경계와 자막 싱크를 한 번 확인해 주세요.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="reels", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -173,6 +205,20 @@ def main(argv: list[str] | None = None) -> int:
     p_sfx.add_argument("--dry-run", action="store_true",
                        help="초안을 고치지 않고 배치안만 보여준다")
     p_sfx.set_defaults(func=cmd_sfx)
+    p_tr = sub.add_parser("transitions", help="기존 초안에 장면 전환 추가")
+    p_tr.add_argument("--name", default="릴스_러프컷", help="캡컷 초안 이름")
+    p_tr.add_argument("--draft-root", default=str(draft.DEFAULT_DRAFT_ROOT))
+    p_tr.add_argument("--duration", type=float,
+                      default=transitions.DEFAULT_DURATION, help="전환 길이(초)")
+    p_tr.add_argument("--per-30s", type=float, default=3.0)
+    p_tr.add_argument("--min-per-30s", type=float, default=2.0)
+    p_tr.add_argument("--max-per-30s", type=float, default=4.0)
+    p_tr.add_argument("--spacing", type=float, default=transitions.MIN_SPACING_SEC,
+                      help="전환 사이 최소 간격(초)")
+    p_tr.add_argument("--force", action="store_true",
+                      help="이미 전환이 있어도 덧붙인다")
+    p_tr.add_argument("--dry-run", action="store_true")
+    p_tr.set_defaults(func=cmd_transitions)
     args = parser.parse_args(argv)
     return args.func(args)
 

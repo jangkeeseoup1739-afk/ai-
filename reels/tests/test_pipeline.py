@@ -91,9 +91,47 @@ def test_draft(tmp: Path, timeline: list[dict]) -> Path:
     return out
 
 
+def test_silence() -> None:
+    """짧은 침묵은 남기고, 0.4초 넘는 침묵과 들어낸 자리는 붙인다."""
+    decisions = [
+        {"id": 0, "start": 0.0, "end": 2.0, "text": "첫 문장입니다", "keep": True},
+        # 0.25초 간격 -> 그대로 남는다
+        {"id": 1, "start": 2.25, "end": 4.0, "text": "둘째 문장입니다", "keep": True},
+        # 2.0초 간격 -> 0.4초만 남는다
+        {"id": 2, "start": 6.0, "end": 8.0, "text": "셋째 문장입니다", "keep": True},
+        {"id": 3, "start": 8.1, "end": 8.6, "text": "음", "keep": False},
+        # 사이에서 군말을 들어냈으니 하드컷
+        {"id": 4, "start": 9.5, "end": 11.0, "text": "넷째 문장입니다", "keep": True},
+    ]
+    tl = subtitles.build_timeline(decisions, max_silence=0.4)
+    assert [t["id"] for t in tl] == [0, 1, 2, 4]
+
+    # 타임라인은 끊김 없이 이어져야 한다 (검은 구멍 금지)
+    for a, b in zip(tl, tl[1:]):
+        assert abs(a["new_end"] - b["new_start"]) < 1e-9, "타임라인에 구멍"
+
+    # 0.25초 침묵은 앞뒤가 절반씩 나눠 가져 전부 보존
+    assert abs(tl[0]["src_end"] - 2.125) < 1e-9, tl[0]
+    assert abs(tl[1]["src_start"] - 2.125) < 1e-9, tl[1]
+    # 2.0초 침묵은 0.4초만 (앞 0.2 + 뒤 0.2), 1.6초는 삭제
+    assert abs(tl[1]["src_end"] - 4.2) < 1e-9, tl[1]
+    assert abs(tl[2]["src_start"] - 5.8) < 1e-9, tl[2]
+    # 군말을 들어낸 자리는 침묵 없이 붙는다
+    assert abs(tl[2]["src_end"] - 8.0) < 1e-9, tl[2]
+    assert abs(tl[3]["src_start"] - 9.5) < 1e-9, tl[3]
+    # 소재 시작 이전으로는 내려가지 않는다
+    assert tl[0]["src_start"] == 0.0
+
+    total = tl[-1]["new_end"]
+    raw = 11.0
+    print(f"침묵 처리 OK — 원본 {raw:.1f}초 -> {total:.2f}초 "
+          f"(0.25초 침묵 보존, 2.0초 침묵은 0.4초만 남김)")
+
+
 def main() -> int:
     tmp = Path(__file__).parent / "_tmp"
     tmp.mkdir(exist_ok=True)
+    test_silence()
     decisions = test_decisions()
     timeline, _ = test_subtitles(decisions)
     test_draft(tmp, timeline)

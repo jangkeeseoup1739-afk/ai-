@@ -8,26 +8,48 @@ from .util import srt_timestamp
 MIN_LINE_SEC = 0.35
 
 
-def build_timeline(decisions: list[dict], gap: float = 0.0) -> list[dict]:
-    """유지 구간만 순서대로 이어 붙인 새 타임라인을 계산한다.
+MAX_SILENCE = 0.4
+
+
+def build_timeline(decisions: list[dict],
+                   max_silence: float = MAX_SILENCE) -> list[dict]:
+    """유지 구간을 이어 붙인 새 타임라인을 계산한다.
+
+    구간 사이 침묵은 `max_silence`까지만 남기고 나머지는 덜어낸다. 남길 침묵은
+    빈자리로 두지 않고 앞뒤 컷의 소재 범위를 넓혀서 채운다 — 그래야 영상에
+    검은 구멍이 생기지 않고, 말끝이 잘리지도 않는다.
+
+    NG나 군말을 들어낸 자리는 침묵을 남기지 않는다(하드컷).
 
     src_start/src_end 는 원본 위치, new_start/new_end 는 컷 후 위치.
     """
+    kept = [i for i, d in enumerate(decisions)
+            if d.get("keep") and d["end"] > d["start"]]
+
+    def bridge(a: int, b: int) -> float:
+        """a와 b 사이에 남겨도 되는 침묵의 길이."""
+        if any(not decisions[k].get("keep") for k in range(a + 1, b)):
+            return 0.0  # 사이에서 뭘 들어냈으면 붙여버린다
+        raw = decisions[b]["start"] - decisions[a]["end"]
+        return min(max(raw, 0.0), max_silence)
+
     cursor = 0.0
     out = []
-    for d in decisions:
-        if not d.get("keep"):
-            continue
-        dur = max(0.0, d["end"] - d["start"])
-        if dur <= 0:
-            continue
+    for n, i in enumerate(kept):
+        d = decisions[i]
+        # 남길 침묵은 앞 컷의 꼬리와 뒤 컷의 머리가 절반씩 나눠 갖는다
+        lead = bridge(kept[n - 1], i) / 2 if n > 0 else 0.0
+        tail = bridge(i, kept[n + 1]) / 2 if n < len(kept) - 1 else 0.0
+        src_start = max(0.0, d["start"] - lead)
+        src_end = d["end"] + tail
+        dur = src_end - src_start
         out.append({
             "id": d["id"],
-            "src_start": d["start"], "src_end": d["end"], "duration": dur,
+            "src_start": src_start, "src_end": src_end, "duration": dur,
             "new_start": cursor, "new_end": cursor + dur,
             "text": d.get("text_final") or d["text"],
         })
-        cursor += dur + gap
+        cursor += dur
     return out
 
 
