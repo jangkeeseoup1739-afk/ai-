@@ -6,12 +6,12 @@ description: 촬영한 세로 영상 파일을 받아 캡컷 초안으로 컷편
 # 릴스 편집팀
 
 ## 규칙
-- 캡컷 초안은 ~/.pycapcut 에 설치된 pycapcut으로 만든다. 초안 폴더: ~/Movies/CapCut/User Data/Projects/com.lveditor.draft
+- 캡컷 초안은 ~/.pycapcut 에 설치된 pycapcut으로 만든다. 초안 폴더는 자동으로 찾는다 (윈도우: %LOCALAPPDATA%\CapCut\User Data\Projects\com.lveditor.draft, 맥: ~/Movies/CapCut/...). 못 찾으면 --draft-root 로 받는다.
 - 시작 전에 "캡컷에서 이 프로젝트를 닫아주세요"라고 말한다.
 - 단계마다 무엇을 했는지 짧은 표로 보여준다. 자료 화면 목록만 내 OK를 받고 진행하고, 나머지는 멈추지 않고 끝까지 간다.
 
 ## 1. 컷편집 + 자막
-- whisper-cli(모델 ~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin, 한국어)로 받아쓴다.
+- faster-whisper(모델 large-v3-turbo, 한국어)로 받아쓴다. 영상 파일을 그대로 읽는다.
 - 같은 말을 다시 한 NG는 마지막 것만 남긴다. "음·어·다시" 같은 군말, 말하다 끊긴 부분, 0.4초 넘는 침묵은 뺀다. 뺀 부분은 이유와 함께 표로.
 - 한 줄 12자 안팎 자막. 오타는 문맥으로 고친다(예: 컵 편집 → 컷편집, 리스 → 릴스).
 - 초안 이름 "릴스_러프컷", 1080x1920, 영상 + 자막 트랙.
@@ -26,7 +26,7 @@ description: 촬영한 세로 영상 파일을 받아 캡컷 초안으로 컷편
 
 ## 4. 배경 자료 화면
 - 사이트·앱·숫자·결과물을 말하는 문장 3~5곳을 골라 보여줄 화면 목록을 먼저 보여주고 OK를 받는다.
-- 크롬으로 페이지를 열고 screencapture -v 로 3~5초씩 녹화하며 천천히 스크롤한다. ~/릴스자료 에 저장.
+- 크롬으로 페이지를 열고 3~5초씩 녹화하며 천천히 스크롤한다 (윈도우: ffmpeg gdigrab + PowerShell SendKeys, 맥: screencapture + osascript). ~/릴스자료 에 저장.
 - 세로에 맞게 잘라 해당 문장 시간에 "자료 화면" 트랙으로 올린다(화면 위쪽 절반).
 - 로그인·결제·개인정보가 보이는 화면은 찍지 않는다.
 

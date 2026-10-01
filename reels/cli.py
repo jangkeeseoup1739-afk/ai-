@@ -13,17 +13,21 @@ import json
 import sys
 from pathlib import Path
 
-from . import broll, clean, draft, sfx, subtitles, transcribe, transitions
+from . import broll, clean, draft, platforms, sfx, subtitles, transcribe, transitions
 from .util import ensure_dir
 
 
 def _add_common(p: argparse.ArgumentParser) -> None:
     p.add_argument("--input", "-i", required=True, help="촬영본 영상 경로")
     p.add_argument("--work", default=None, help="작업 폴더 (기본: 영상 옆 .reels_work)")
-    p.add_argument("--model", default=str(transcribe.DEFAULT_MODEL), help="whisper 모델 경로")
+    p.add_argument("--model", default=transcribe.DEFAULT_MODEL,
+                   help="faster-whisper 모델 (기본: large-v3-turbo)")
     p.add_argument("--lang", default="ko")
-    p.add_argument("--threads", type=int, default=0)
+    p.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"],
+                   help="cuda가 있으면 자동으로 씁니다")
     p.add_argument("--beam", type=int, default=5)
+    p.add_argument("--no-vad", action="store_true",
+                   help="긴 무음을 미리 걸러내는 VAD를 끕니다")
     p.add_argument("--max-chars", type=int, default=12, help="자막 한 줄 글자 수")
     p.add_argument("--max-silence", type=float, default=subtitles.MAX_SILENCE,
                    help="구간 사이에 남길 침묵의 최대 길이(초)")
@@ -66,8 +70,9 @@ def cmd_all(args) -> int:
         print(f"판정 파일을 그대로 사용합니다: {args.from_decisions}", file=sys.stderr)
     else:
         print("[1/4] 받아쓰기...", file=sys.stderr)
-        segments = transcribe.transcribe(src, work, Path(args.model), args.lang,
-                                         args.threads, args.beam)
+        segments = transcribe.transcribe(src, work, args.model, args.lang,
+                                         args.beam, args.device,
+                                         vad=not args.no_vad)
         if not segments:
             raise SystemExit("받아쓴 내용이 없습니다. 오디오를 확인하세요.")
         print(f"[2/4] NG/군말/끊김 판정... ({len(segments)}구간)", file=sys.stderr)
@@ -205,8 +210,11 @@ def cmd_broll(args) -> int:
     shots = broll.load_plan(out_dir / "plan.json")
 
     if args.stage == "record":
-        print(f"{out_dir} 에 녹화합니다. "
-              "화면 기록 권한이 필요하고, 스크롤에는 손쉬운 사용 권한이 필요합니다.")
+        print(f"{out_dir} 에 녹화합니다.")
+        for hint in (platforms.record_permission_hint(),
+                     platforms.scroll_permission_hint()):
+            if hint:
+                print(f"  {hint}")
         done = broll.record(shots, out_dir, settle=args.settle, rect=args.rect,
                             scroll=not args.no_scroll, dry_run=args.dry_run)
         if args.dry_run:

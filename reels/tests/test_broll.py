@@ -92,10 +92,14 @@ def main() -> int:
     assert broll.load_plan(path)[0].file == shots[0].file
     print(f"계획 저장/복원 OK — {path.name}")
 
-    cmds = broll.record_commands(live[0], work)
-    assert cmds[0][:3] == ["open", "-a", "Google Chrome"]
-    assert cmds[1][0] == "screencapture" and "-v" in cmds[1] and "-V" in cmds[1]
-    print("  녹화 명령:", " ".join(cmds[1]))
+    # 명령의 플랫폼별 형태는 test_platforms 에서 본다. 여기선 연결만 확인.
+    open_cmd, cap_cmd = broll.record_commands(live[0], work)
+    assert open_cmd[-1] == live[0].url, open_cmd
+    assert str(work / live[0].file) in cap_cmd, cap_cmd
+    assert any(f"{live[0].duration:.0f}" in str(a) or
+               f"{live[0].duration:.2f}" in str(a) for a in cap_cmd), cap_cmd
+    print("  브라우저:", " ".join(open_cmd))
+    print("  녹화 명령:", " ".join(cap_cmd))
 
     fake_recordings(shots, work)
     added = broll.place(content, shots, work)

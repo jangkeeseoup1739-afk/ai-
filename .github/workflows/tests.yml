@@ -36,6 +36,7 @@ jobs:
 
       # ffmpeg는 imageio-ffmpeg가 정적 바이너리를 들고 오고,
       # libmediainfo는 pymediainfo 휠에 들어 있어 apt 설치가 필요 없다.
+      # 받아쓰기(faster-whisper)는 모델 다운로드가 필요해 CI에서 돌리지 않는다.
       - name: 도구 확인
         run: |
           python -c "import imageio_ffmpeg; print('ffmpeg:', imageio_ffmpeg.get_ffmpeg_exe())"
@@ -51,6 +52,9 @@ jobs:
           for c in all sfx transitions broll; do
             python -m reels "$c" --help > /dev/null
           done
+
+      - name: 플랫폼 분기 (test_platforms)
+        run: python reels/tests/test_platforms.py
 
       - name: 컷편집·자막 (test_pipeline)
         run: python reels/tests/test_pipeline.py

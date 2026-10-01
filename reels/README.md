@@ -4,20 +4,40 @@
 영상을 다시 인코딩하지 않는다. 컷은 캡컷 타임라인의 구간 정보로만 들어가므로
 초안을 열어서 마음대로 다시 늘리고 줄일 수 있다.
 
-## 설치 (macOS)
+## 설치
 
-```bash
-# Homebrew가 없다면 먼저 (맥 비밀번호 필요)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+윈도우와 맥 모두에서 돈다. 캡컷 초안 폴더는 자동으로 찾는다.
 
-bash reels/setup-mac.sh
+### 윈도우
+
+```powershell
+powershell -ExecutionPolicy Bypass -File reels\setup-windows.ps1
 ```
 
-`setup-mac.sh`가 하는 일: `yt-dlp`/`ffmpeg`/`whisper-cpp` 설치, whisper 모델
-`ggml-large-v3-turbo-q5_0.bin`을 `~/.cache/whisper`에 내려받기, `~/.pycapcut`에
-가상환경을 만들고 `pycapcut` 설치.
+winget으로 `ffmpeg`/`yt-dlp`를 깔고, `%USERPROFILE%\.pycapcut` 에 가상환경을 만들어
+`pycapcut`과 `faster-whisper`를 넣는다. 관리자 권한은 필요 없다.
+
+### 맥 / 직접 설치
+
+```bash
+brew install ffmpeg yt-dlp          # 맥
+python3 -m venv ~/.pycapcut
+~/.pycapcut/bin/pip install -r reels/requirements.txt
+```
+
+받아쓰기 모델(`large-v3-turbo`, 약 1.5GB)은 **처음 실행할 때 한 번 자동으로** 내려받아
+`~/.cache/reels-whisper` 에 둔다. 따로 받을 필요 없다. NVIDIA GPU가 있으면 자동으로 쓴다
+(`--device cpu` 로 끌 수 있다).
 
 ## 실행
+
+윈도우 (PowerShell):
+
+```powershell
+& "$HOME\.pycapcut\Scripts\python.exe" -m reels all -i "$HOME\Desktop\촬영본.mp4" --name 릴스_러프컷
+```
+
+맥 / 리눅스:
 
 ```bash
 source ~/.pycapcut/bin/activate
@@ -75,9 +95,7 @@ NG나 군말을 들어낸 자리는 침묵을 남기지 않고 바로 붙인다.
 
 | 파일 | 내용 |
 |------|------|
-| `audio.wav` | whisper용 16kHz mono |
-| `whisper.json` | 받아쓰기 원본 |
-| `segments.json` | 정규화한 구간 목록 |
+| `segments.json` | 받아쓴 구간 목록 |
 | `decisions.json` | 구간별 keep/이유/최종 문장 — **손으로 고치는 파일** |
 | `report.md` | 뺀 부분·남긴 부분 리포트 |
 | `subtitle.srt` | 컷 이후 타임라인 기준 12자 자막 |
@@ -93,7 +111,9 @@ NG나 군말을 들어낸 자리는 침묵을 남기지 않고 바로 붙인다.
 | `--max-silence` | `0.4` | 구간 사이에 남길 침묵의 최대 길이(초) |
 | `--no-fill` | — | 세로 꽉 채우기 배율을 적용하지 않음(원본 비율 유지) |
 | `--subtitle-y` | `-0.62` | 자막 세로 위치(-1이 맨 아래) |
-| `--model` | `~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin` | whisper 모델 |
+| `--model` | `large-v3-turbo` | faster-whisper 모델 |
+| `--device` | `auto` | `cpu` / `cuda` 로 고정 가능 |
+| `--no-vad` | — | 긴 무음을 미리 걸러내는 VAD를 끈다 |
 
 가로 촬영본은 기본적으로 세로 화면을 꽉 채우도록 확대된다(16:9 → 9:16이면 3.16배).
 좌우가 잘리는 게 싫으면 `--no-fill`로 두고 캡컷에서 직접 맞추면 된다.
@@ -183,7 +203,7 @@ Signal_Glitch_2` 순서로 돌려 쓰므로 같은 전환이 연달아 나오지
 
 ## 배경 자료 화면
 
-세 단계로 나뉜다. 가운데 `record`만 macOS에서 돌아간다.
+세 단계로 나뉜다. 가운데 `record`는 윈도우와 맥에서 돌아간다.
 
 ```bash
 python -m reels broll plan   --name 릴스_러프컷   # 보여줄 화면 목록 (확인용)
@@ -207,12 +227,19 @@ python -m reels broll place  --name 릴스_러프컷   # 세로로 잘라 트랙
 
 ### record
 
-`open -a "Google Chrome" --new <url>` 로 열고, 페이지가 뜰 때까지 기다린 뒤
-`screencapture -v -V <초> -x` 로 녹화하며 아래 화살표를 눌러 천천히 스크롤한다.
-`~/릴스자료`에 저장.
+크롬으로 열고, 페이지가 뜰 때까지 기다린 뒤 녹화하며 아래 화살표를 눌러
+천천히 스크롤한다. `~/릴스자료`에 저장.
 
-- **화면 기록 권한**이 필요하다 (시스템 설정 → 개인정보 보호 및 보안 → 화면 기록).
-- 스크롤에는 **손쉬운 사용 권한**이 필요하다. 없으면 스크롤만 조용히 포기하고 녹화는 계속한다.
+| | 윈도우 | 맥 |
+|---|---|---|
+| 열기 | `start chrome` | `open -a "Google Chrome"` |
+| 녹화 | `ffmpeg -f gdigrab` (mp4) | `screencapture -v` (mov) |
+| 스크롤 | PowerShell SendKeys | `osascript` |
+
+- 맥은 **화면 기록 권한**과, 스크롤에 **손쉬운 사용 권한**이 필요하다.
+  윈도우는 별도 권한이 없지만 스크롤하려면 크롬 창이 맨 앞에 있어야 한다.
+- 스크롤이 막히면 조용히 포기하고 녹화는 계속한다.
+- 직접 녹화한 파일을 `~/릴스자료`에 같은 이름(확장자는 무관)으로 두면 `place`가 그걸 쓴다.
 - `--dry-run`으로 실행할 명령만 볼 수 있다. `--no-scroll`, `--rect x,y,w,h`, `--settle 초` 지원.
 - 녹화 전에 비밀번호 관리자·메일·알림을 닫아둘 것.
 

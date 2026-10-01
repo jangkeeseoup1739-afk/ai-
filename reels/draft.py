@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from . import platforms
 from .util import SEC_US
 
-DEFAULT_DRAFT_ROOT = Path(
-    "~/Movies/CapCut/User Data/Projects/com.lveditor.draft").expanduser()
+DEFAULT_DRAFT_ROOT = platforms.default_draft_root()
 
 
 def _fill_scale(mat_w: int, mat_h: int, canvas_w: int, canvas_h: int) -> float:
@@ -33,10 +33,7 @@ def build_draft(source: Path, timeline: list[dict], srt_path: Path, *,
     source = Path(source).expanduser().resolve()
     draft_root = Path(draft_root).expanduser()
     if not draft_root.exists():
-        raise SystemExit(
-            f"캡컷 초안 폴더가 없습니다: {draft_root}\n"
-            "캡컷을 한 번 실행해 프로젝트를 하나 만든 뒤 다시 시도하세요."
-        )
+        raise SystemExit(platforms.draft_root_help())
     if not timeline:
         raise SystemExit("남은 구간이 없습니다. decisions.json을 확인하세요.")
 
