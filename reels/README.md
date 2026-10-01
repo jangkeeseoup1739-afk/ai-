@@ -251,6 +251,31 @@ python -m reels broll place  --name 릴스_러프컷   # 세로로 잘라 트랙
 `--crop-mode cover`(기본, 가운데를 채워 자름) / `fit`(전체를 넣고 위아래 여백).
 `--crop-x 0`이면 왼쪽 기준으로 자른다(웹 내용이 왼쪽에 몰린 경우).
 
+## 환경 점검 (doctor)
+
+설치가 끝났는데 뭐가 안 되는지 모를 때, 한 번 돌려서 리포트를 받는다.
+
+```powershell
+& "$HOME\.pycapcut\Scripts\python.exe" -m reels doctor
+```
+
+점검 항목: 파이썬·가상환경, ffmpeg/yt-dlp, pycapcut/faster-whisper,
+**캡컷 초안 폴더**(후보를 전부 찍어보고 실제로 있는 곳과 초안 목록까지),
+작업 폴더, GPU, **모니터 구성**(여러 대면 `--rect`가 필요하다고 알려준다),
+**2초 시험 녹화**(파일이 생기는지·해상도), **PowerShell 스크롤**.
+
+출력은 그대로 붙여넣기 좋은 마크다운이다. 실패가 하나라도 있으면 종료 코드 1.
+
+| 옵션 | 뜻 |
+|------|-----|
+| `--draft-root <경로>` | 초안 폴더를 직접 지정해 확인 |
+| `--no-record` | 2초 시험 녹화를 건너뛴다 |
+| `--full` | 실제로 키를 보내 스크롤까지 시험 (활성 창에 ↓ 가 들어간다) |
+
+시험 녹화는 화면을 2초 찍어 해상도만 확인하고 **파일을 바로 지운다.**
+스크롤은 기본적으로 PowerShell COM 객체 생성까지만 보고, 실제 키 전송은
+`--full` 을 줘야 한다 — 활성 창에 영향을 주기 때문이다.
+
 ## 테스트
 
 whisper와 네트워크 없이 돈다. 합성 영상과 가짜 받아쓰기를 쓴다.
@@ -260,6 +285,8 @@ ffmpeg는 `imageio-ffmpeg`가 정적 바이너리를 들고 오고, `libmediainf
 ```bash
 pip install -r reels/requirements-dev.txt
 
+python reels/tests/test_platforms.py     # 윈도우/맥 분기
+python reels/tests/test_doctor.py       # 환경 점검 리포트
 python reels/tests/test_pipeline.py     # 침묵 처리·판정·자막·초안 생성
 python reels/tests/test_sfx.py          # 효과음 배치·Openverse 파싱·출처 문구
 python reels/tests/test_transitions.py  # 전환 지점 선정·주입·중복 방지

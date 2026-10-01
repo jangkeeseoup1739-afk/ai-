@@ -49,12 +49,15 @@ jobs:
       - name: CLI 동작 확인
         run: |
           python -m reels --help > /dev/null
-          for c in all sfx transitions broll; do
+          for c in all sfx transitions broll doctor; do
             python -m reels "$c" --help > /dev/null
           done
 
       - name: 플랫폼 분기 (test_platforms)
         run: python reels/tests/test_platforms.py
+
+      - name: 환경 점검 (test_doctor)
+        run: python reels/tests/test_doctor.py
 
       - name: 컷편집·자막 (test_pipeline)
         run: python reels/tests/test_pipeline.py

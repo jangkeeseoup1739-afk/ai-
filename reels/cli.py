@@ -13,7 +13,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import broll, clean, draft, platforms, sfx, subtitles, transcribe, transitions
+from . import (broll, clean, doctor, draft, platforms, sfx, subtitles,
+               transcribe, transitions)
 from .util import ensure_dir
 
 
@@ -236,6 +237,15 @@ def cmd_broll(args) -> int:
     raise SystemExit(f"알 수 없는 단계: {args.stage}")
 
 
+def cmd_doctor(args) -> int:
+    print("환경을 점검합니다. 잠깐 걸립니다...", file=sys.stderr)
+    checks = doctor.run(full=args.full, record=not args.no_record,
+                        draft_root=args.draft_root or "")
+    print()
+    print(doctor.report(checks))
+    return 1 if any(c.status == doctor.FAIL for c in checks) else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="reels", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -295,6 +305,14 @@ def main(argv: list[str] | None = None) -> int:
     p_br.add_argument("--dry-run", action="store_true",
                       help="record: 실행할 명령만 출력")
     p_br.set_defaults(func=cmd_broll)
+    p_doc = sub.add_parser("doctor", help="환경을 점검해 붙여넣기 좋은 리포트를 낸다")
+    p_doc.add_argument("--draft-root", default="",
+                       help="캡컷 초안 폴더를 직접 지정해 확인")
+    p_doc.add_argument("--no-record", action="store_true",
+                       help="2초 시험 녹화를 건너뛴다")
+    p_doc.add_argument("--full", action="store_true",
+                       help="실제로 키를 보내 스크롤까지 시험한다 (활성 창에 ↓ 입력)")
+    p_doc.set_defaults(func=cmd_doctor)
     args = parser.parse_args(argv)
     return args.func(args)
 
