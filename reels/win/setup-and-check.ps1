@@ -59,8 +59,13 @@ if (-not $Python) {
 # ---------------------------------------------------------- 2. 코드 내려받기
 Step 2 "코드 내려받기"
 $Root = Join-Path $HOME "ai-"
-if (Test-Path (Join-Path $PSScriptRoot "..\doctor.py")) {
-    $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$local = ""
+if ($PSScriptRoot) {                      # iex 로 실행하면 비어 있다
+    $maybe = Join-Path $PSScriptRoot "..\doctor.py"
+    if (Test-Path $maybe) { $local = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path }
+}
+if ($local) {
+    $Root = $local
     Log "이미 가지고 있는 코드를 씁니다: $Root"
 } else {
     $zip = Join-Path $env:TEMP "reels-src.zip"
@@ -68,6 +73,7 @@ if (Test-Path (Join-Path $PSScriptRoot "..\doctor.py")) {
     $url = "https://github.com/$Repo/archive/refs/heads/$Branch.zip"
     Log "내려받는 중: $url"
     try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Remove-Item $zip, $out -Recurse -Force -ErrorAction SilentlyContinue
         Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
         Expand-Archive -Path $zip -DestinationPath $out -Force
@@ -115,6 +121,12 @@ if (-not (Test-Path $VenvPy)) {
 }
 & $VenvPy -m pip install --upgrade pip 2>&1 | Select-Object -Last 2 | ForEach-Object { Log "  $_" }
 $req = Join-Path $Root "reels\requirements.txt"
+if (-not (Test-Path $req)) {
+    Log "코드를 찾지 못했습니다: $req"
+    Log "2번 단계(코드 내려받기)가 실패했습니다. 위 메시지를 확인해주세요."
+    try { Start-Process notepad.exe $LogPath } catch { }
+    return
+}
 Log "설치 중: $req"
 & $VenvPy -m pip install -r $req 2>&1 | Select-Object -Last 6 | ForEach-Object { Log "  $_" }
 
