@@ -61,9 +61,9 @@ jobs:
             python -m blog "$c" --help > /dev/null
           done
 
-      - name: 블로그 진단 (test_parse / keywords / score / flow)
+      - name: 블로그 진단 (test_parse / keywords / score / flow / config)
         run: |
-          for t in parse keywords score flow; do
+          for t in parse keywords score flow config; do
             python blog/tests/test_$t.py
           done
 

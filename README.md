@@ -46,4 +46,11 @@ python -m blog diagnose --id 내블로그아이디 --out 진단.md   # 전체 �
 python -m blog plan     --id 내블로그아이디 --out 계획.md   # 다음 4주에 쓸 글
 ```
 
+아이디를 한 번 저장해 두면 `--id` 를 뺄 수 있고, Tab 자동완성도 한 줄로 켜진다.
+
+```bash
+python -m blog config --id 내블로그아이디        # 기억시키기
+eval "$(python3 -m blog completion bash)"       # Tab 완성 + `blog` 짧은 명령
+```
+
 자세한 사용법과 채점 기준, 30일 실행 순서는 [blog/README.md](blog/README.md) 에 있다.

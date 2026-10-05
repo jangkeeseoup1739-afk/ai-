@@ -26,6 +26,30 @@ python -m blog repurpose --url https://blog.naver.com/내아이디/223456789
 
 `--id` 는 블로그 주소의 아이디다 (`blog.naver.com/<아이디>`).
 
+## 두 번째부터는 더 짧게
+
+아이디는 한 번만 주면 기억한다. 다음부터는 `--id` 를 빼도 된다.
+
+```bash
+python -m blog config --id ks506l --place 수원   # 저장
+python -m blog config --show                     # 확인
+python -m blog diagnose --out 진단.md            # --id 없이 그대로 실행
+```
+
+Tab 자동완성(명령·옵션 완성, 파일 경로 완성)은 한 줄이면 끝난다.
+`blog` 라는 짧은 명령도 같이 만들어 준다.
+
+```bash
+eval "$(python3 -m blog completion bash)"   # ~/.bashrc 에 넣으면 영구
+eval "$(python3 -m blog completion zsh)"    # ~/.zshrc
+
+blog dia<Tab>            -> blog diagnose
+blog diagnose --<Tab>    -> --id --limit --html-dir --save-dir --stats --detail --out
+blog diagnose --stats <Tab>  -> 파일 목록
+```
+
+명령 이름을 바꾸고 싶으면 `--name 블로그` 처럼 주면 된다.
+
 회사·학교 네트워크에서 네이버가 막혀 있으면, 글 페이지를 브라우저에서
 `다른 이름으로 저장`(html)한 뒤 폴더째로 넣으면 똑같이 돌아간다.
 

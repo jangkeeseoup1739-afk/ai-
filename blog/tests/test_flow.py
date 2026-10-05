@@ -4,17 +4,20 @@
 """
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+TMP = Path(__file__).parent / "_tmp_flow"
+# 실제 설정 파일(~/.config/blog)을 건드리지 않게 테스트 전용 경로로 돌린다
+os.environ["BLOG_CONFIG"] = str(TMP / "config.json")
+
 from blog import cli, fetch, plan, repurpose, stats   # noqa: E402
 from blog.parse import parse_post                     # noqa: E402
 from blog.tests import _fixtures as fx                # noqa: E402
-
-TMP = Path(__file__).parent / "_tmp_flow"
 
 
 def _make_html_dir() -> Path:

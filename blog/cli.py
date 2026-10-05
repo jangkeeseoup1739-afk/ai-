@@ -5,6 +5,9 @@
     python -m blog post --url https://blog.naver.com/아이디/123456
     python -m blog repurpose --url https://blog.naver.com/아이디/123456
 
+아이디는 한 번 주면 기억한다(`python -m blog config --show` 로 확인).
+Tab 자동완성은 `eval "$(python -m blog completion bash)"` 한 줄이면 된다.
+
 네트워크가 막힌 곳에서는 글 페이지를 저장해 두고 --html-dir 로 넣으면 된다.
 조회수·유입 검색어는 공개되지 않으므로, 블로그 통계에서 내려받은 표를
 CSV로 저장해 --stats 로 넣으면 리포트에 함께 들어간다.
@@ -17,7 +20,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from . import fetch, keywords as kw, plan as plan_mod, report, repurpose, score, stats
+from . import (completion, config, fetch, keywords as kw, plan as plan_mod,
+               report, repurpose, score, stats)
 from .parse import parse_post
 
 
@@ -57,7 +61,9 @@ def _load_posts(args):
     if getattr(args, "html_dir", None):
         return _load_from_dir(args.html_dir, args.id or "")
     if not args.id:
-        raise SystemExit("--id (블로그 주소의 아이디) 또는 --html-dir 가 필요합니다.")
+        raise SystemExit(
+            "--id (블로그 주소의 아이디) 또는 --html-dir 가 필요합니다.\n"
+            "한 번 저장해 두면 다음부터 생략됩니다:  python -m blog config --id 내아이디")
     try:
         refs = fetch.post_list(args.id, args.limit)
     except fetch.FetchError as e:
@@ -95,6 +101,7 @@ def _load_posts(args):
 
 
 def cmd_diagnose(args) -> int:
+    config.resolve(args)
     posts = _load_posts(args)
     bd = score.score_blog(args.id or "블로그", posts)
     inflow = stats.load(args.stats) if args.stats else None
@@ -105,6 +112,7 @@ def cmd_diagnose(args) -> int:
 
 
 def cmd_post(args) -> int:
+    config.resolve(args)
     if args.html:
         html = Path(args.html).expanduser().read_text(encoding="utf-8",
                                                       errors="replace")
@@ -126,6 +134,7 @@ def cmd_post(args) -> int:
 
 
 def cmd_keywords(args) -> int:
+    config.resolve(args)
     if args.text:
         text = Path(args.text).expanduser().read_text(encoding="utf-8",
                                                       errors="replace")
@@ -157,6 +166,7 @@ def cmd_keywords(args) -> int:
 
 
 def cmd_plan(args) -> int:
+    config.resolve(args)
     keyword, existing = args.keyword, []
     if not keyword:
         posts = _load_posts(args)
@@ -173,6 +183,7 @@ def cmd_plan(args) -> int:
 
 
 def cmd_repurpose(args) -> int:
+    config.resolve(args)
     if args.html:
         html = Path(args.html).expanduser().read_text(encoding="utf-8",
                                                       errors="replace")
@@ -191,12 +202,41 @@ def cmd_repurpose(args) -> int:
 
 
 def _add_source(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--id", help="블로그 아이디 (blog.naver.com/<아이디>)")
+    p.add_argument("--id", help="블로그 아이디 (blog.naver.com/<아이디>). "
+                               "한 번 주면 기억해서 다음부터 생략 가능")
     p.add_argument("--limit", type=int, default=20, help="최근 몇 편까지 볼지")
     p.add_argument("--html-dir", default=None,
                    help="미리 저장해 둔 글 html 폴더 (네트워크가 막힌 경우)")
     p.add_argument("--save-dir", default=None, help="받은 html을 여기에 저장")
     p.add_argument("--out", "-o", default=None, help="결과를 쓸 파일 (.md)")
+
+
+def cmd_config(args) -> int:
+    if args.clear:
+        config.clear()
+        print("저장된 설정을 지웠습니다.")
+        return 0
+    if args.id or args.place or args.limit:
+        p = config.save(id=args.id, place=args.place, limit=args.limit)
+        print(f"저장했습니다: {p}")
+    saved = config.load()
+    if not saved:
+        print("저장된 설정이 없습니다.  python -m blog config --id 내아이디")
+        return 0
+    print("현재 설정 (" + str(config.path()) + ")")
+    for k in config.KEYS:
+        if k in saved:
+            print(f"  {k} = {saved[k]}")
+    return 0
+
+
+def cmd_completion(args) -> int:
+    print(completion.script(build_parser(), args.shell, args.name), end="")
+    if sys.stdout.isatty():   # 눈으로 볼 때만 설치법을 덧붙인다
+        print(f"\n# 설치: 위 줄을 ~/.{args.shell}rc 에 넣거나\n"
+              f'#   eval "$(python3 -m blog completion {args.shell})"',
+              file=sys.stderr)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -243,6 +283,19 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--seconds", type=int, default=30)
     r.add_argument("--out", "-o", default=None)
     r.set_defaults(func=cmd_repurpose)
+
+    c = sub.add_parser("config", help="자주 쓰는 값 저장 (--id 생략용)")
+    c.add_argument("--id", default=None, help="기억해 둘 블로그 아이디")
+    c.add_argument("--place", default=None, help="기억해 둘 지역 키워드")
+    c.add_argument("--limit", type=int, default=None, help="기본으로 볼 글 수")
+    c.add_argument("--show", action="store_true", help="저장된 값 보기 (기본 동작)")
+    c.add_argument("--clear", action="store_true", help="저장된 값 지우기")
+    c.set_defaults(func=cmd_config)
+
+    cp = sub.add_parser("completion", help="Tab 자동완성 스크립트 출력")
+    cp.add_argument("shell", choices=["bash", "zsh"])
+    cp.add_argument("--name", default="blog", help="만들 명령 이름 (기본: blog)")
+    cp.set_defaults(func=cmd_completion)
     return ap
 
 
