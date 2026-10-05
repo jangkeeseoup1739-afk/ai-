@@ -33,3 +33,17 @@ ffmpeg -i reel.mp4 -ar 16000 -ac 1 -c:a pcm_s16le reel.wav
 # 3. 자막 뽑기 (한국어)
 whisper-cli -m ~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin -f reel.wav -l ko -otxt
 ```
+
+---
+
+# 블로그 노출·유입 진단
+
+네이버 블로그가 왜 검색에서 안 걸리는지 항목별로 채점해 알려 주는 도구다.
+설치할 것이 없다(파이썬 3.10 이상, 표준 라이브러리만 씀).
+
+```bash
+python -m blog diagnose --id 내블로그아이디 --out 진단.md   # 전체 진단
+python -m blog plan     --id 내블로그아이디 --out 계획.md   # 다음 4주에 쓸 글
+```
+
+자세한 사용법과 채점 기준, 30일 실행 순서는 [blog/README.md](blog/README.md) 에 있다.

@@ -44,13 +44,27 @@ jobs:
           python -c "import pycapcut; print('pycapcut ok')"
 
       - name: 문법 검사
-        run: python -m compileall -q reels
+        run: python -m compileall -q reels blog
 
       - name: CLI 동작 확인
         run: |
           python -m reels --help > /dev/null
           for c in all sfx transitions broll; do
             python -m reels "$c" --help > /dev/null
+          done
+
+      # 블로그 진단은 표준 라이브러리만 쓰고 네트워크를 타지 않는다.
+      - name: 블로그 CLI 동작 확인
+        run: |
+          python -m blog --help > /dev/null
+          for c in diagnose post keywords plan repurpose; do
+            python -m blog "$c" --help > /dev/null
+          done
+
+      - name: 블로그 진단 (test_parse / keywords / score / flow)
+        run: |
+          for t in parse keywords score flow; do
+            python blog/tests/test_$t.py
           done
 
       - name: 플랫폼 분기 (test_platforms)
