@@ -30,6 +30,16 @@ def test_thin_post_lists_fixes() -> None:
     print(f"  빈약한 글 {d.score}/{d.total}, 고칠 것 {len(d.fixes)}개 OK")
 
 
+def test_repeat_rate_is_length_aware() -> None:
+    # 긴 키워드도 "1500자에 5~15회"면 통과해야 한다 (밀도 기준이면 떨어졌다)
+    body = ["지식산업센터 공실을 직접 보고 왔습니다. " + "현장 이야기를 적습니다. " * 12] * 8
+    d = score.score_post(parse_post(fx.post_html("주안 지식산업센터 공실 정리", body)),
+                         keyword="지식산업센터")
+    c = next(c for c in d.checks if c.name == "키워드 반복")
+    assert c.ok, c.got
+    print(f"  긴 키워드 반복 기준 OK ({c.got})")
+
+
 def test_ad_phrases_and_density_bounds() -> None:
     body = ["최저가 문의 주세요. 카톡 주세요. 상담 가능합니다."] * 5
     d = score.score_post(parse_post(fx.post_html("최저가 문의", body), "myid", "3"))
@@ -43,7 +53,7 @@ def test_keyword_stuffing_in_title() -> None:
         parse_post(fx.post_html("상추 상추 상추 키우기", ["상추 " * 50]), "myid", "4"),
         keyword="상추")
     rep = next(c for c in d.checks if c.name == "제목 키워드 반복 과다 아님")
-    dens = next(c for c in d.checks if c.name == "키워드 밀도")
+    dens = next(c for c in d.checks if c.name == "키워드 반복")
     assert not rep.ok and not dens.ok
     print("  제목 키워드 남용·밀도 과다 적발 OK")
 
@@ -74,6 +84,7 @@ def test_similarity_edges() -> None:
 def main() -> int:
     test_good_post_scores_full()
     test_thin_post_lists_fixes()
+    test_repeat_rate_is_length_aware()
     test_ad_phrases_and_density_bounds()
     test_keyword_stuffing_in_title()
     test_blog_level()

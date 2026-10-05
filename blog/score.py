@@ -22,7 +22,8 @@ MIN_IMAGES = 5
 MIN_HEADINGS = 3
 TAG_RANGE = (5, 10)
 TITLE_RANGE = (15, 35)
-DENSITY_RANGE = (0.5, 2.0)
+# 1000자(공백 제외)당 핵심 키워드 반복 횟수. 1500자 글이면 5~15회.
+REPEAT_RANGE = (3.0, 10.0)
 
 AD_PHRASES = ["최저가", "문의 주세요", "전화 주세요", "카톡 주세요", "상담 가능",
               "무료 상담", "협찬", "원고료", "제공받아", "체험단", "구매 링크",
@@ -111,19 +112,21 @@ def score_post(post: Post, keyword: str | None = None) -> PostDiagnosis:
               f"{MIN_CHARS}자 이상으로. 지금보다 {max(0, MIN_CHARS - chars)}자 더 필요하다. "
               "직접 겪은 과정·숫자·실패한 이유를 넣어 늘린다(같은 말 반복은 역효과)."))
 
-    d = kw.density(body, k)
-    dlo, dhi = DENSITY_RANGE
-    add(Check("키워드 밀도", 12,
-              12 if dlo <= d <= dhi else (6 if d else 0),
-              f"{d}% ('{ks}' {kw.count_in(body, k) if k else 0}회)",
-              "" if dlo <= d <= dhi else
-              ((f"밀도가 낮다. 본문에 '{k}'를 {dlo}~{dhi}% 수준으로(대략 "
-                f"{max(1, int(chars * dlo / 100 / max(1, len(k))))}회 이상) "
-                "자연스럽게 넣는다." if k else
+    rate = kw.per_1000(body, k)
+    rlo, rhi = REPEAT_RANGE
+    want = max(3, int(chars / 1000 * rlo))
+    add(Check("키워드 반복", 12,
+              12 if rlo <= rate <= rhi else (6 if rate else 0),
+              f"'{ks}' {kw.count_in(body, k) if k else 0}회 "
+              f"(1000자당 {rate}회, 밀도 {kw.density(body, k)}%)",
+              "" if rlo <= rate <= rhi else
+              ((f"적게 나온다. 본문에 '{k}'를 {want}회 이상 자연스럽게 넣는다."
+                if k else
                 "노리는 키워드 자체가 없다. 먼저 제목을 검색어로 바꾸고, "
                 "그 말을 본문에도 쓴다.")
-               if d < dlo else
-               "밀도가 높다. 같은 키워드 반복을 줄이고 유사어로 바꾼다.")))
+               if rate < rlo else
+               "너무 자주 나온다. 일부를 '이 건물', '여기' 같은 말로 바꾼다. "
+               "같은 말이 반복되면 어뷰징으로 본다.")))
 
     # 3. 체류시간을 만드는 구성 -------------------------------------------
     add(Check("이미지", 10, _partial(post.images, MIN_IMAGES, 10), f"{post.images}장",

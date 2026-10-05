@@ -94,6 +94,18 @@ def density(text: str, keyword: str) -> float:
     return round(count_in(text, keyword) * len(keyword) / chars * 100, 2)
 
 
+def per_1000(text: str, keyword: str) -> float:
+    """글 1000자(공백 제외)당 키워드가 몇 번 나오는지.
+
+    밀도(%)는 키워드가 길수록 저절로 커져서 긴 키워드에 불리하다.
+    "1500자에 5~10번"처럼 사람이 쓰는 기준을 그대로 보려면 횟수가 맞다.
+    """
+    chars = len(re.sub(r"\s+", "", text or ""))
+    if not chars or not keyword:
+        return 0.0
+    return round(count_in(text, keyword) / chars * 1000, 1)
+
+
 def main_keyword(title: str, body: str = "") -> str:
     """이 글이 노리는 키워드로 보이는 말 하나.
 
