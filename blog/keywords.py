@@ -110,17 +110,31 @@ def main_keyword(title: str, body: str = "") -> str:
 
 
 # 검색 의도를 붙여 롱테일을 만드는 수식어. 앞/뒤 붙이는 자리를 나눠 둔다.
+# 분야마다 사람들이 같이 치는 말이 다르다. preset 으로 고른다.
 INTENT_SUFFIX = ["후기", "추천", "방법", "가격", "비용", "순서", "준비물", "주의사항",
                  "비교", "차이", "장단점", "실패 이유", "초보", "총정리", "체크리스트"]
 INTENT_PREFIX = ["처음", "혼자", "집에서", "직접", "하루만에", "무료로"]
 
+# 부동산·지역 영업(중개·분양·임대)에서 실제로 같이 검색되는 말
+ESTATE_SUFFIX = ["시세", "임대료", "매물", "공실", "분양가", "입주 조건", "실투자금",
+                 "대출", "취득세", "관리비", "전용률", "주차", "임대 수익률",
+                 "분양 후기", "계약 전 확인", "단점", "전망"]
+ESTATE_PREFIX = ["초보 임대인", "실입주", "투자용", "소형", "역세권", "급매"]
 
-def longtail(keyword: str, year: int | None = None, place: str = "") -> list[str]:
+PRESETS = {
+    "기본": (INTENT_SUFFIX, INTENT_PREFIX),
+    "부동산": (ESTATE_SUFFIX, ESTATE_PREFIX),
+}
+
+
+def longtail(keyword: str, year: int | None = None, place: str = "",
+             preset: str = "기본") -> list[str]:
     """핵심 키워드 하나에서 노려볼 롱테일 조합을 만든다."""
     if not keyword:
         return []
-    out = [f"{keyword} {s}" for s in INTENT_SUFFIX]
-    out += [f"{p} {keyword}" for p in INTENT_PREFIX]
+    suffix, prefix = PRESETS.get(preset, PRESETS["기본"])
+    out = [f"{keyword} {s}" for s in suffix]
+    out += [f"{p} {keyword}" for p in prefix]
     if year:
         out.append(f"{year} {keyword}")
         out.append(f"{keyword} {year} 기준")

@@ -15,7 +15,7 @@ TMP = Path(__file__).parent / "_tmp_flow"
 # 실제 설정 파일(~/.config/blog)을 건드리지 않게 테스트 전용 경로로 돌린다
 os.environ["BLOG_CONFIG"] = str(TMP / "config.json")
 
-from blog import cli, fetch, plan, repurpose, stats   # noqa: E402
+from blog import cli, fetch, keywords as kw, plan, repurpose, stats   # noqa: E402
 from blog.parse import parse_post                     # noqa: E402
 from blog.tests import _fixtures as fx                # noqa: E402
 
@@ -105,6 +105,24 @@ def test_plan_slots_are_weekdays() -> None:
     print("  발행 요일 OK")
 
 
+def test_estate_preset() -> None:
+    slots = plan.build("지식산업센터", weeks=4, per_week=3, place="인천 주안",
+                       preset="부동산")
+    assert len(slots) == 12
+    # 유형마다 노리는 키워드가 달라야 4주에 세부 키워드가 깔린다
+    assert len({s.keyword for s in slots}) == 12, [s.keyword for s in slots]
+    assert all(s.keyword.startswith("인천 주안 지식산업센터") for s in slots)
+    assert any("시세" in s.title for s in slots)
+    assert any("공실" in s.title for s in slots)
+    assert all("{" not in s.title for s in slots)       # 틀이 안 채워진 곳이 없어야 한다
+
+    tails = kw.longtail("지식산업센터", 2026, "인천 주안", preset="부동산")
+    assert tails[0] == "인천 주안 지식산업센터"
+    assert any(t.endswith("공실") for t in tails)
+    assert not any(t.endswith("준비물") for t in tails)   # 기본 수식어가 섞이면 안 된다
+    print(f"  부동산 프리셋 OK (키워드 {len({s.keyword for s in slots})}개)")
+
+
 def test_keywords_command() -> None:
     out = TMP / "키워드.md"
     assert cli.main(["keywords", "--id", "myid", "--html-dir", str(_make_html_dir()),
@@ -171,6 +189,7 @@ def main() -> int:
         test_post_and_repurpose()
         test_plan_from_posts()
         test_plan_slots_are_weekdays()
+        test_estate_preset()
         test_keywords_command()
         test_post_list_rss_then_fallback()
         test_post_list_raises_when_blocked()

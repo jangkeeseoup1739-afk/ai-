@@ -145,7 +145,7 @@ def cmd_keywords(args) -> int:
         if main:
             lines += ["", f"## `{main[0][0]}` 롱테일 후보", ""]
             lines += [f"- {t}" for t in kw.longtail(main[0][0], date.today().year,
-                                                    args.place)]
+                                                    args.place, args.preset)]
         _out("\n".join(lines), args.out)
         return 0
 
@@ -160,7 +160,8 @@ def cmd_keywords(args) -> int:
     if clusters:
         main = clusters[0][0]
         lines += ["", f"## 주력 `{main}` 롱테일 후보", ""]
-        lines += [f"- {t}" for t in kw.longtail(main, date.today().year, args.place)]
+        lines += [f"- {t}" for t in kw.longtail(main, date.today().year, args.place,
+                                                args.preset)]
     _out("\n".join(lines), args.out)
     return 0
 
@@ -177,7 +178,8 @@ def cmd_plan(args) -> int:
         existing = [p.title for p in posts]
         print(f"주력 주제를 `{keyword}` 로 잡았습니다.", file=sys.stderr)
     slots = plan_mod.build(keyword, weeks=args.weeks, per_week=args.per_week,
-                           place=args.place, existing_titles=existing)
+                           place=args.place, existing_titles=existing,
+                           preset=args.preset)
     _out(plan_mod.render(keyword, slots, args.place), args.out)
     return 0
 
@@ -264,7 +266,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_source(k)
     k.add_argument("--text", default=None, help="글 텍스트 파일 하나만 볼 때")
     k.add_argument("--top", type=int, default=20)
-    k.add_argument("--place", default="", help="지역 키워드를 붙일 때 (예: 수원)")
+    k.add_argument("--place", default="", help="지역 키워드를 붙일 때 (예: 인천 주안)")
+    k.add_argument("--preset", default="기본", choices=list(kw.PRESETS),
+                   help="롱테일 수식어 묶음 (부동산 = 시세·공실·분양가 등)")
     k.set_defaults(func=cmd_keywords)
 
     pl = sub.add_parser("plan", help="4주 발행 계획")
@@ -273,6 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
     pl.add_argument("--weeks", type=int, default=4)
     pl.add_argument("--per-week", type=int, default=3)
     pl.add_argument("--place", default="")
+    pl.add_argument("--preset", default="기본", choices=list(plan_mod.PRESETS),
+                    help="글 유형·키워드 묶음 (부동산 = 중개·분양·임대용)")
     pl.set_defaults(func=cmd_plan)
 
     r = sub.add_parser("repurpose", help="글을 릴스 대본으로")

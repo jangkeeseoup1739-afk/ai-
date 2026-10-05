@@ -17,6 +17,9 @@ python -m blog diagnose --id 내블로그아이디 --stats 유입.csv --out 진�
 # 3. 다음 4주에 뭘 쓸지
 python -m blog plan --id 내블로그아이디 --out 계획.md
 
+# 3-1. 부동산·지역 영업이면 (시세·공실·임대료·입주조건 … 으로 키워드가 바뀐다)
+python -m blog plan --keyword 지식산업센터 --place "인천 주안" --preset 부동산
+
 # 4. 글 하나만 점검
 python -m blog post --url https://blog.naver.com/내아이디/223456789
 
