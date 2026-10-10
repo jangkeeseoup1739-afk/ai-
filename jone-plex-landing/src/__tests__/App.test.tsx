@@ -70,3 +70,23 @@ describe('랜딩페이지 전체', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('location.maps');
   });
 });
+
+describe('기숙사 타입 안내', () => {
+  it('타입별 실 수·면적(㎡/평)과 무상 제공 품목 표시', () => {
+    render(<App />);
+    const typeA = document.getElementById('type-a')!;
+    expect(within(typeA).getByText(/A type 12실 · A1 type 54실/)).toBeInTheDocument();
+    const contract = within(typeA).getByRole('row', { name: /계약면적/ });
+    expect(contract).toHaveTextContent('53.2776');
+    expect(within(document.getElementById('type-b')!).getByRole('row', { name: /전용면적/ })).toHaveTextContent('26.5660');
+    expect(contract).toHaveTextContent('16.12');
+    expect(within(document.getElementById('type-c')!).getByText(/C type 6실 · C1 type 27실/)).toBeInTheDocument();
+    expect(screen.getByText('빌트인 냉장고')).toBeInTheDocument();
+  });
+
+  it('10층 탭 → C·C1 타입 보기 링크', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole('tab', { name: '지상 10층 (복층)' }));
+    expect(screen.getByRole('link', { name: /C · C1 타입 \(복층\) 평면·면적 보기/ })).toHaveAttribute('href', '#type-c');
+  });
+});

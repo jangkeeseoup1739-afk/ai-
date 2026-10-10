@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: `#${SECTION.info}`, label: '핵심 정보' },
   { href: `#${SECTION.merits}`, label: '주요 장점' },
   { href: `#${SECTION.floors}`, label: '층별 정보' },
+  { href: `#${SECTION.units}`, label: '타입 안내' },
   { href: `#${SECTION.location}`, label: '위치·교통' },
 ];
 

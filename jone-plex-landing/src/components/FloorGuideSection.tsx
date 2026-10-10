@@ -7,6 +7,7 @@
  */
 import { useRef, useState, type KeyboardEvent } from 'react';
 import { EMPTY_FEATURES_TEXT, EMPTY_VALUE_TEXT, floors, type FloorInfo } from '../config/floors';
+import { unitTypes } from '../config/unitTypes';
 import { SECTION } from '../lib/links';
 import { Icon } from './Icons';
 import { Section } from './Section';
@@ -48,7 +49,7 @@ export function FloorGuideSection({ onConsultFloor }: FloorGuideSectionProps) {
       <div
         role="tablist"
         aria-label="층 선택"
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0"
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-6"
       >
         {floors.map((floor, i) => {
           const selected = floor.id === active.id;
@@ -179,6 +180,24 @@ function FloorDetail({ floor, onConsult }: { floor: FloorInfo; onConsult: () => 
           <p className="mt-1 text-base font-semibold text-gold-700">{EMPTY_FEATURES_TEXT}</p>
         )}
       </div>
+
+      {/* 기숙사 타입이 연결된 층: 타입 평면·면적 카드로 이동 */}
+      {floor.unitTypeIds && floor.unitTypeIds.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {unitTypes
+            .filter((t) => floor.unitTypeIds?.includes(t.id))
+            .map((t) => (
+              <a
+                key={t.id}
+                href={`#${t.id}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-navy-200 bg-white px-4 py-3 text-[15px] font-semibold text-navy-800 hover:border-gold-400"
+              >
+                {t.title} 평면·면적 보기
+                <Icon name="arrowRight" className="h-4 w-4" />
+              </a>
+            ))}
+        </div>
+      )}
 
       <button
         type="button"

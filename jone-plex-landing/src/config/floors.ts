@@ -34,6 +34,8 @@ export interface FloorInfo {
   price: string | null;
   /** 주요 특징 – 공식 자료로 확인된 내용만 (예: '드라이브인 적용', '층고 ○.○m') */
   features: string[];
+  /** 이 층에 있는 기숙사 타입 id (unitTypes.ts) – 넣으면 "타입 평면·면적 보기" 버튼 표시 */
+  unitTypeIds?: string[];
 }
 
 export const floors: FloorInfo[] = [
@@ -125,17 +127,30 @@ export const floors: FloorInfo[] = [
     supplyArea: null,
     exclusiveArea: null,
     price: null,
-    features: ['테라스형 호실 구성 (8층 도면 기준)'],
+    features: ['테라스형 평면 (8층 도면 기준)', '오피스텔형 기숙사: A·A1·B 타입 (도면 기준)'],
+    unitTypeIds: ['type-a', 'type-b'],
   },
   {
-    id: '9-10f',
-    label: '지상 9~10층',
-    planImage: null,
-    planImageAlt: '제이원플렉스 지상 9~10층 평면도',
+    id: '9f',
+    label: '지상 9층',
+    planImage: '/images/floors/9f.webp',
+    planImageAlt: '제이원플렉스 지상 9층 평면도',
     supplyArea: null,
     exclusiveArea: null,
     price: null,
-    features: [],
+    features: ['오피스텔형 기숙사: A·A1·B·E 타입 (도면 기준)'],
+    unitTypeIds: ['type-a', 'type-b', 'type-e'],
+  },
+  {
+    id: '10f',
+    label: '지상 10층 (복층)',
+    planImage: '/images/floors/10f.webp',
+    planImageAlt: '제이원플렉스 지상 10층 복층 평면도',
+    supplyArea: null,
+    exclusiveArea: null,
+    price: null,
+    features: ['복층형 평면 (10층 도면 기준)', '오피스텔형 기숙사: C·C1·D 타입 (도면 기준)'],
+    unitTypeIds: ['type-c', 'type-d'],
   },
 ];
 

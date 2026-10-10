@@ -13,6 +13,7 @@ import { HeroSection } from './components/HeroSection';
 import { KeyMeritsSection } from './components/KeyMeritsSection';
 import { LocationSection } from './components/LocationSection';
 import { SetupNoticeProvider } from './components/SetupNotice';
+import { UnitTypesSection } from './components/UnitTypesSection';
 import { SECTION, scrollToId } from './lib/links';
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
         <CoreInfoCards />
         <KeyMeritsSection />
         <FloorGuideSection onConsultFloor={handleConsultFloor} />
+        <UnitTypesSection />
         <LocationSection />
         <ConsultForm preset={floorPreset} />
       </main>

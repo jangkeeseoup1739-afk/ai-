@@ -50,6 +50,7 @@ export const SECTION = {
   info: 'info',
   merits: 'merits',
   floors: 'floors',
+  units: 'units',
   location: 'location',
   consult: 'consult',
 } as const;

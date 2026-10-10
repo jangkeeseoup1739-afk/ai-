@@ -60,6 +60,7 @@ export const coreInfoCards: CoreInfoCard[] = [
     items: [
       '지하 1층 ~ 지상 10층 층별 구성',
       '드라이브인 · 도어투도어 구조 안내',
+      '8~10층 오피스텔형 기숙사 (테라스·복층 타입)',
       '적용 층과 시설은 공식 자료 기준으로 안내',
     ],
     target: 'floors',
