@@ -68,6 +68,26 @@ describe('상담 신청 폼', () => {
     expect(screen.queryByText('상담 신청이 접수되었습니다')).not.toBeInTheDocument();
   });
 
+  it('구글 Apps Script 주소면 text/plain 으로 전송, 응답 ok:false 는 실패 처리', async () => {
+    const url = 'https://script.google.com/macros/s/abc/exec';
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('{"ok":false,"error":"validation"}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    render(<ConsultForm endpoint={url} />);
+    await fillValid();
+    await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
+    expect(await screen.findByText(/접수가 처리되지 않았습니다/)).toBeInTheDocument();
+    expect(fetchSpy.mock.calls[0][1].headers['Content-Type']).toMatch(/^text\/plain/);
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toMatchObject({ name: '홍길동', purpose: '임대' });
+  });
+
+  it('구글 Apps Script 응답 ok:true 면 접수 완료', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', { status: 200 })));
+    render(<ConsultForm endpoint="https://script.google.com/macros/s/abc/exec" />);
+    await fillValid();
+    await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
+    expect(await screen.findByText('상담 신청이 접수되었습니다')).toBeInTheDocument();
+  });
+
   it('네트워크 오류 처리', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fail')));
     render(<ConsultForm endpoint="https://example.com/form" />);

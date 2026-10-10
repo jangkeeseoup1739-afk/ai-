@@ -4,8 +4,8 @@
  *  endpoint 가 비어 있으면 → 'test-mode' (어디에도 보내지 않음, 접수 완료라고 표시하지 않음)
  *  endpoint 가 있으면      → JSON 으로 POST, 서버가 성공(2xx) 응답을 줄 때만 'success'
  *
- *  Formspree(https://formspree.io), 이 프로젝트의 /api/consult(Vercel 함수),
- *  Google Apps Script 웹앱 등 "JSON POST 를 받는 주소"라면 어디든 연결할 수 있습니다.
+ *  구글 시트(Apps Script 웹앱 – scripts/google-apps-script.gs), Formspree, 이 프로젝트의
+ *  /api/consult(Vercel 함수) 등 "JSON POST 를 받는 주소"라면 어디든 연결할 수 있습니다.
  */
 
 export interface ConsultPayload {
@@ -37,15 +37,27 @@ export async function submitConsult(
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000); // 15초 이상 응답이 없으면 실패 처리
+    // 구글 Apps Script 웹앱은 브라우저의 사전 확인(CORS preflight)을 받지 못하므로
+    // "단순 요청"(text/plain)으로 보냅니다. 내용은 똑같이 JSON 문자열입니다.
+    const isAppsScript = /^https:\/\/script\.google\.com\//.test(endpoint);
     const res = await fetchImpl(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: isAppsScript
+        ? { 'Content-Type': 'text/plain;charset=utf-8' }
+        : { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
     clearTimeout(timer);
 
-    if (res.ok) return { status: 'success' };
+    if (res.ok) {
+      // 응답 본문에 { ok: false } 가 오면 실패 (Apps Script 는 오류여도 HTTP 200 으로 응답)
+      const body = await res.json().catch(() => null);
+      if (body && typeof body === 'object' && (body as { ok?: unknown }).ok === false) {
+        return { status: 'error', message: '접수가 처리되지 않았습니다. 입력 내용을 확인하거나 전화로 문의해 주세요.' };
+      }
+      return { status: 'success' };
+    }
     if (res.status === 503) {
       return { status: 'error', message: '상담 접수 서버 설정이 완료되지 않았습니다. 전화로 문의해 주세요.' };
     }
