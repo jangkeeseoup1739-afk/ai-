@@ -12,7 +12,7 @@ import { BuildingIllustration } from './BuildingIllustration';
 
 /** 첫 화면 하단 요약 배지 – 확인된 사실만 짧게 */
 const HIGHLIGHTS = [
-  { icon: 'train', text: '인천2호선 주안국가산단역 인근' },
+  { icon: 'train', text: '주안국가산단역 2번 출구 도보 약 2분' },
   { icon: 'building', text: '지하 1층 ~ 지상 10층 층별 공급' },
   { icon: 'pin', text: '인천 미추홀구 주안국가산업단지' },
 ] as const;

@@ -13,7 +13,7 @@ import { Section } from './Section';
 import { useSetupNotice } from './SetupNotice';
 
 export function LocationSection() {
-  const { address, areaLabel } = siteConfig.location;
+  const { address, areaLabel, mapImages } = siteConfig.location;
   const showNotice = useSetupNotice();
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'fail'>('idle');
 
@@ -111,6 +111,20 @@ export function LocationSection() {
           </li>
         </ul>
       </div>
+
+      {/* ── 지도 이미지 (site.ts → location.mapImages) – 누르면 크게 보기 ── */}
+      {mapImages.length > 0 && (
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          {mapImages.map((m) => (
+            <figure key={m.src} className="overflow-hidden rounded-3xl bg-white shadow-card">
+              <a href={m.src} target="_blank" rel="noopener noreferrer" aria-label={`${m.alt} 크게 보기 (새 창)`} className="block">
+                <img src={m.src} alt={m.alt} loading="lazy" decoding="async" width={600} height={660} className="aspect-[600/660] h-auto w-full bg-white object-contain" />
+              </a>
+              <figcaption className="border-t border-navy-100 px-5 py-3.5 text-[15px] font-semibold text-navy-800">{m.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
     </Section>
   );
 }
