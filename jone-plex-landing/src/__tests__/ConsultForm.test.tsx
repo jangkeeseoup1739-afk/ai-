@@ -134,9 +134,14 @@ describe('상담 신청 폼', () => {
     expect(await screen.findByText(/네트워크 오류/)).toBeInTheDocument();
   });
 
-  it('개인정보 전문 보기 팝업에 미입력 운영자 정보가 표시됨', async () => {
+  it('개인정보 전문 보기: 보유 기간·보호책임자·처리방침 링크', async () => {
     render(<ConsultForm endpoint="" />);
     await userEvent.click(screen.getByRole('button', { name: '전문 보기' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('운영자 입력 필요');
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('상담 완료 및 분양 종료 시까지');
+    expect(dialog).toHaveTextContent('개인정보 보호책임자: 분양 상담 담당자');
+    expect(dialog).toHaveTextContent('Google LLC');
+    expect(dialog).not.toHaveTextContent('운영자 입력 필요');
+    expect(screen.getByRole('link', { name: /개인정보처리방침 전문 보기/ })).toHaveAttribute('href', 'https://joneflex.homefixweb.com/privacy');
   });
 });

@@ -3,7 +3,7 @@
  * 운영자 정보는 src/config/site.ts 의 privacy 항목을 사용합니다. (비어 있는 항목은 표시하지 않음)
  */
 import { siteConfig } from '../config/site';
-import { blogHref, phoneDisplay } from '../lib/links';
+import { blogHref, isHttpUrl, phoneDisplay } from '../lib/links';
 
 export function Footer() {
   const p = siteConfig.privacy;
@@ -40,6 +40,13 @@ export function Footer() {
           <p>※ 본 페이지의 이미지·일러스트는 이해를 돕기 위한 것으로 실제와 다를 수 있습니다.</p>
           <p>※ 면적·분양가·계약 조건 등 분양 정보는 공식 분양 자료 및 계약서를 기준으로 하며, 상담 시 최신 내용을 확인해 주시기 바랍니다.</p>
           <p>※ 교통 정보의 거리·소요 시간은 현장 위치와 교통 상황에 따라 달라질 수 있습니다.</p>
+          {isHttpUrl(p.policyUrl) && (
+            <p className="pt-3">
+              <a href={p.policyUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-navy-200 underline underline-offset-2 hover:text-white">
+                개인정보처리방침
+              </a>
+            </p>
+          )}
           <p className="pt-3">© {siteConfig.projectName}. All rights reserved.</p>
         </div>
       </div>

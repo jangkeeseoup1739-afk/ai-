@@ -177,14 +177,17 @@ export const siteConfig = {
     representative: '',
     /** 사업자등록번호 */
     businessNumber: '',
-    /** 개인정보 보호책임자 이름 */
-    officerName: '',
+    /** 개인정보 보호책임자 (이름 또는 직책) – 기존 홈페이지 처리방침과 동일 */
+    officerName: '분양 상담 담당자',
     /** 개인정보 관련 문의 연락처 (전화 또는 이메일) */
-    officerContact: '',
-    /** 보유·이용 기간 (예: '상담 완료 후 1년, 이후 지체 없이 파기') */
-    retentionPeriod: '',
-    /** 개인정보 처리방침 전문 페이지 주소 (있다면) */
-    policyUrl: '',
+    officerContact: '010-8873-7258',
+    /** 보유·이용 기간 – 기존 홈페이지 처리방침과 동일 */
+    retentionPeriod: '상담 완료 및 분양 종료 시까지 (요청 시 지체 없이 파기)',
+    /**
+     * 개인정보 처리방침 전문 페이지 주소
+     * 접수 내용이 기존 홈페이지와 같은 시트로 가므로 기존 홈페이지 처리방침을 연결합니다.
+     */
+    policyUrl: 'https://joneflex.homefixweb.com/privacy',
   },
 };
 
