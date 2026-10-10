@@ -12,6 +12,7 @@ import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { KeyMeritsSection } from './components/KeyMeritsSection';
 import { LocationSection } from './components/LocationSection';
+import { PromoPopup } from './components/PromoPopup';
 import { SetupNoticeProvider } from './components/SetupNotice';
 import { UnitTypesSection } from './components/UnitTypesSection';
 import { SECTION, scrollToId } from './lib/links';
@@ -42,6 +43,7 @@ export default function App() {
       </main>
       <Footer />
       <FixedContactBar />
+      <PromoPopup />
     </SetupNoticeProvider>
   );
 }

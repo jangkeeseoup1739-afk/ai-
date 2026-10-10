@@ -62,6 +62,13 @@ async function openPage(name, viewport, isMobile = false) {
   );
   await page.goto(BASE, { waitUntil: 'networkidle' });
   console.log(`\n[${name}] ${viewport.width}×${viewport.height}`);
+  // 첫 화면 안내 팝업 확인 후 닫기 (다른 검사를 가리지 않도록)
+  const promo = page.getByRole('dialog', { name: '분양 · 임대 가능' });
+  check(await promo.isVisible(), '안내 팝업 표시 (분양·임대 / 특별 프로모션)');
+  const popupOverflow = await promo.evaluate((el) => el.getBoundingClientRect().width <= window.innerWidth);
+  check(popupOverflow, '안내 팝업이 화면 폭 안에 들어옴');
+  await page.screenshot({ path: `test-results/${name === 'PC' ? 'pc' : name === '모바일' ? 'mobile' : 'tablet'}-popup.png` });
+  await promo.getByRole('button', { name: '닫기', exact: true }).click();
   return { page, context, errors };
 }
 
@@ -202,6 +209,13 @@ try {
     const { page, context, errors } = await openPage('모바일', { width: 390, height: 844 }, true);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     check(overflow <= 0, `가로 넘침 없음 (${overflow}px)`);
+
+    // 오늘 하루 보지 않기
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: '오늘 하루 보지 않기' }).click();
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForTimeout(300);
+    check((await page.getByRole('dialog').count()) === 0, '오늘 하루 보지 않기 → 새로고침해도 팝업 안 뜸');
 
     const bar = page.locator('nav[aria-label="빠른 상담"]').first();
     check(await bar.isVisible(), '하단 고정 상담 바 표시');

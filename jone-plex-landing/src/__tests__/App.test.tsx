@@ -2,10 +2,45 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import { floors } from '../config/floors';
+import { PROMO_HIDE_KEY } from '../components/PromoPopup';
 
 beforeAll(() => {
   // jsdom 에는 scrollIntoView 가 없어서 빈 함수로 대체
   Element.prototype.scrollIntoView = () => {};
+});
+
+// 다른 기능 테스트에서는 안내 팝업을 "오늘 하루 보지 않기" 상태로 시작
+beforeEach(() => localStorage.setItem(PROMO_HIDE_KEY, String(Date.now() + 60_000)));
+afterEach(() => localStorage.clear());
+
+describe('안내 팝업', () => {
+  it('페이지를 열면 분양·임대 / 특별 프로모션 팝업 표시, 닫기', async () => {
+    localStorage.clear();
+    render(<App />);
+    const dialog = await screen.findByRole('dialog', { name: '분양 · 임대 가능' });
+    expect(dialog).toHaveTextContent('특별 프로모션 진행 중');
+    expect(within(dialog).getByRole('link', { name: /전화 상담 010-8873-7258/ })).toHaveAttribute('href', 'tel:01088737258');
+    await userEvent.click(within(dialog).getByRole('button', { name: '닫기' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('오늘 하루 보지 않기 → 다시 열어도 안 뜸', async () => {
+    localStorage.clear();
+    const first = render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: '오늘 하루 보지 않기' }));
+    first.unmount();
+    render(<App />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('프로모션 상담 신청 → 팝업 닫히고 상담 섹션으로 이동', async () => {
+    localStorage.clear();
+    const spy = vi.spyOn(Element.prototype, 'scrollIntoView');
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: '프로모션 상담 신청' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(spy.mock.contexts.some((el) => (el as Element).id === 'consult')).toBe(true);
+  });
 });
 
 describe('랜딩페이지 전체', () => {
