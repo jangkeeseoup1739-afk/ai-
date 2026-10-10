@@ -38,7 +38,16 @@ describe('랜딩페이지 전체', () => {
       expect(within(panel).getByRole('button', { name: `${f.label} 상담 문의` })).toBeInTheDocument();
     }
     expect(within(panel).getAllByText('상담 문의').length).toBe(3);
-    expect(within(panel).getByText(/도면 준비 중/)).toBeInTheDocument();
+    // 도면이 등록된 층은 이미지, 없는 층은 "도면 준비 중"
+    for (const f of floors) {
+      await userEvent.click(screen.getByRole('tab', { name: f.label }));
+      if (f.planImage) {
+        expect(within(panel).getByRole('img', { name: f.planImageAlt })).toHaveAttribute('src', f.planImage);
+        expect(within(panel).getByRole('link', { name: '도면 크게 보기' })).toHaveAttribute('target', '_blank');
+      } else {
+        expect(within(panel).getByText(/도면 준비 중/)).toBeInTheDocument();
+      }
+    }
   });
 
   it('키보드 → 로 다음 층 탭 이동', async () => {

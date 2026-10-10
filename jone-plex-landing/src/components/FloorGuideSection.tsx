@@ -97,15 +97,32 @@ function FloorPlan({ floor }: { floor: FloorInfo }) {
   if (floor.planImage) {
     return (
       <figure className="overflow-hidden rounded-2xl bg-white shadow-card">
-        <img
-          key={floor.planImage}
-          src={floor.planImage}
-          alt={floor.planImageAlt}
-          loading="lazy"
-          decoding="async"
-          className="h-auto w-full object-contain"
-        />
-        <figcaption className="px-4 py-2.5 text-xs text-navy-600">※ 도면은 이해를 돕기 위한 것으로 실제 시공 시 일부 변경될 수 있습니다.</figcaption>
+        {/* 휴대폰에서 도면 글씨가 작으므로, 누르면 원본 크기로 새 창에서 열림 (두 손가락으로 확대 가능) */}
+        <a href={floor.planImage} target="_blank" rel="noopener noreferrer" aria-label={`${floor.planImageAlt} 크게 보기 (새 창)`}>
+          <img
+            key={floor.planImage}
+            src={floor.planImage}
+            alt={floor.planImageAlt}
+            loading="lazy"
+            decoding="async"
+            // 이미지가 늦게 로드되어도 화면이 밀리지 않도록 도면 비율(약 16:9)만큼 자리를 미리 잡아 둠
+            width={1240}
+            height={710}
+            className="aspect-[1240/710] h-auto w-full bg-white object-contain"
+          />
+        </a>
+        <figcaption className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs text-navy-600">
+          <span>※ 도면은 이해를 돕기 위한 것으로 실제 시공 시 일부 변경될 수 있습니다. 분양 현황은 상담 시 최신 기준으로 안내합니다.</span>
+          <a
+            href={floor.planImage}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg border border-navy-200 px-3 py-2 text-sm font-semibold text-navy-800 hover:border-gold-400"
+          >
+            도면 크게 보기
+            <Icon name="external" className="h-4 w-4" />
+          </a>
+        </figcaption>
       </figure>
     );
   }

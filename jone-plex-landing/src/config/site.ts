@@ -101,14 +101,16 @@ export const siteConfig = {
        * 첫 화면 배경 이미지 경로 (public 폴더 기준, 예: '/images/hero.webp')
        * 비워두면 네이비 그라데이션 + 건물 일러스트가 표시됩니다.
        */
-      src: '',
-      alt: '제이원플렉스 지식산업센터 외관',
+      src: '/images/hero-aerial.webp',
+      alt: '제이원플렉스 지식산업센터 광역 조감도',
       /**
        * true  = 실제 현장 촬영 사진  → "현장 사진" 문구 표시
        * false = 투시도·CG·참고 이미지 → "이해를 돕기 위한 이미지" 문구 표시
        * 실제 사진이 아니라면 반드시 false 로 두세요.
        */
       isActualPhoto: false,
+      /** 실제 사진이 아닐 때 하단에 표시할 이미지 설명 (예: '광역 조감도(CG)', '외관 투시도') */
+      caption: '배경 이미지는 광역 조감도(CG)',
     },
   },
 

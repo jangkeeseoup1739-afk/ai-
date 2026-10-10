@@ -40,7 +40,7 @@ export const floors: FloorInfo[] = [
   {
     id: 'b1',
     label: '지하 1층',
-    planImage: null,
+    planImage: '/images/floors/b1.webp',
     planImageAlt: '제이원플렉스 지하 1층 평면도',
     supplyArea: null,
     exclusiveArea: null,
@@ -50,7 +50,7 @@ export const floors: FloorInfo[] = [
   {
     id: '1f',
     label: '지상 1층',
-    planImage: null,
+    planImage: '/images/floors/1f.webp',
     planImageAlt: '제이원플렉스 지상 1층 평면도',
     supplyArea: null,
     exclusiveArea: null,
@@ -60,7 +60,7 @@ export const floors: FloorInfo[] = [
   {
     id: '2f',
     label: '지상 2층',
-    planImage: null,
+    planImage: '/images/floors/2f.webp',
     planImageAlt: '제이원플렉스 지상 2층 평면도',
     supplyArea: null,
     exclusiveArea: null,
@@ -70,7 +70,7 @@ export const floors: FloorInfo[] = [
   {
     id: '3f',
     label: '지상 3층',
-    planImage: null,
+    planImage: '/images/floors/3f.webp',
     planImageAlt: '제이원플렉스 지상 3층 평면도',
     supplyArea: null,
     exclusiveArea: null,

@@ -29,12 +29,13 @@ export function HeroSection() {
           <img
             src={hero.src}
             alt={hero.alt}
-            className="absolute inset-0 -z-20 h-full w-full object-cover"
-            fetchPriority="high"
+            className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_center]"
+            // 첫 화면 이미지는 가장 먼저 내려받도록 우선순위를 높임 (React 18 은 소문자 속성으로 전달)
+            {...{ fetchpriority: 'high' }}
             decoding="async"
           />
-          {/* 글씨가 잘 보이도록 어둡게 덮는 층 */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-navy-950/80 via-navy-950/70 to-navy-950/95" />
+          {/* 글씨가 잘 보이도록 어둡게 덮는 층 – 모바일은 전체, PC는 왼쪽(글씨 쪽)만 진하게 */}
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-navy-950/85 via-navy-950/75 to-navy-950/95 lg:bg-gradient-to-r lg:from-navy-950/95 lg:via-navy-950/70 lg:to-navy-950/10" />
         </>
       ) : (
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_#1D345E_0%,_#0F1F3D_45%,_#0A1529_100%)]">
@@ -91,12 +92,19 @@ export function HeroSection() {
           ))}
         </ul>
 
+        {/* ── 모바일·태블릿: 배경에 가려지는 건물을 카드로 한 번 더 또렷하게 보여줌 ── */}
+        {hasImage && (
+          <figure className="mt-8 overflow-hidden rounded-2xl border border-white/10 lg:hidden">
+            <img src={hero.src} alt="" loading="lazy" decoding="async" className="h-auto w-full" />
+          </figure>
+        )}
+
         {/* ── 이미지 고지 문구 (허위 표시 방지) ── */}
         <p className="mt-6 text-xs text-navy-300">
           {hasImage && hero.isActualPhoto
             ? '※ 배경 이미지는 현장 사진입니다.'
             : hasImage
-              ? '※ 배경 이미지는 이해를 돕기 위한 참고 이미지로 실제와 다를 수 있습니다.'
+              ? `※ ${hero.caption || '배경 이미지는 이해를 돕기 위한 참고 이미지'}로 실제와 다를 수 있습니다.`
               : '※ 배경 그림은 이해를 돕기 위한 일러스트이며 실제 건물 외관과 다릅니다.'}
         </p>
       </div>

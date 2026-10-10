@@ -79,6 +79,8 @@ try {
     check(ogRes.ok(), 'OG 이미지 파일 접근 가능');
     check((await page.request.get(BASE + 'favicon.svg')).ok(), '파비콘 접근 가능');
     check((await page.request.get(BASE + 'robots.txt')).ok(), 'robots.txt 접근 가능');
+    const heroLoaded = await page.locator('#top img').first().evaluate((img) => img.complete && img.naturalWidth > 0);
+    check(heroLoaded, '첫 화면 조감도 이미지 로드');
 
     // 프리렌더 확인: JS 없이 받은 HTML 에 본문이 들어있는지
     const rawHtml = await (await page.request.get(BASE)).text();
@@ -133,6 +135,12 @@ try {
       await tab.click();
       const heading = (await page.locator('#floor-panel h3').textContent()).trim();
       check(heading === label && (await tab.getAttribute('aria-selected')) === 'true', `층 탭 "${label}" → 안내 영역 변경`);
+      const plan = page.locator('#floor-panel figure img');
+      if (await plan.count()) {
+        await plan.scrollIntoViewIfNeeded();
+        const loaded = await plan.evaluate((img) => img.decode().then(() => img.naturalWidth > 0).catch(() => false));
+        check(loaded, `층 탭 "${label}" 도면 이미지 로드`);
+      }
     }
 
     // 층 상담 문의 → 폼 관심 층
