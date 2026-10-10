@@ -1,0 +1,44 @@
+name: landing
+
+on:
+  push:
+    branches: ['**']
+    paths: ['jone-plex-landing/**', '.github/workflows/landing.yml']
+  pull_request:
+    paths: ['jone-plex-landing/**', '.github/workflows/landing.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: 빌드 · 단위 테스트 · 브라우저 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: jone-plex-landing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: jone-plex-landing/package-lock.json
+      - run: npm ci
+      - name: 빌드 (타입 검사 + 프리렌더 포함)
+        run: npm run build
+      - name: 단위 테스트
+        run: npm test
+      - name: 브라우저 설치
+        run: npx playwright-core install --with-deps chromium
+      - name: 브라우저 테스트 (링크·탭·폼·반응형)
+        run: npm run test:e2e
+      - name: 화면 캡처 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: jone-plex-landing/test-results/

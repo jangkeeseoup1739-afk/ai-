@@ -33,3 +33,9 @@ ffmpeg -i reel.mp4 -ar 16000 -ac 1 -c:a pcm_s16le reel.wav
 # 3. 자막 뽑기 (한국어)
 whisper-cli -m ~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin -f reel.wav -l ko -otxt
 ```
+
+---
+
+## 제이원플렉스 분양 랜딩페이지
+
+`jone-plex-landing/` 폴더에 주안국가산단역 제이원플렉스 지식산업센터 분양 홍보용 랜딩페이지(React + TypeScript + Tailwind, Vercel 배포용)가 있습니다. 실행·설정·배포 방법은 [jone-plex-landing/README.md](jone-plex-landing/README.md)를 보세요.

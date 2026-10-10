@@ -1,0 +1,38 @@
+{
+  "name": "jone-plex-landing",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "주안국가산단역 제이원플렉스 지식산업센터 분양 홍보 랜딩페이지",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:e2e": "node scripts/e2e.mjs",
+    "check": "npm run build && npm test && npm run test:e2e"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.6.1",
+    "jsdom": "^25.0.1",
+    "playwright-core": "^1.56.0",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

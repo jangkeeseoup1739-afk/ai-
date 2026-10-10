@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* 메뉴·버튼으로 섹션 이동 시 부드럽게 스크롤 */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  body {
+    @apply bg-white font-sans text-navy-900 antialiased;
+    word-break: keep-all; /* 한글 단어 단위 줄바꿈 */
+    overflow-wrap: anywhere;
+  }
+  /* 키보드 사용자를 위한 포커스 표시 */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #c29a4e;
+    outline-offset: 2px;
+  }
+  #main {
+    scroll-margin-top: 4rem;
+  }
+}
