@@ -155,13 +155,16 @@ export const siteConfig = {
   form: {
     /**
      * 상담 신청서를 보낼 주소
+     *  현재: 기존 홈페이지(joneflex.homefixweb.com)와 같은 구글 Apps Script 주소
+     *        → '제이원플렉스 관심고객' 시트의 '관심고객' 탭에 쌓이고 이메일 알림 (접수번호가 LP- 로 시작)
      *  ''                  → 테스트 모드 (신청이 어디에도 전송되지 않으며, 화면에 테스트 모드라고 표시)
      *  '/api/consult'      → 이 프로젝트에 포함된 Vercel 서버 함수 사용 (환경변수 설정 필요)
      *  'https://formspree.io/f/xxxx' → Formspree 등 외부 폼 서비스 사용
      *
      * Vercel 환경변수 VITE_CONSULT_ENDPOINT 를 설정하면 이 값보다 우선합니다.
      */
-    endpoint: '',
+    endpoint:
+      'https://script.google.com/macros/s/AKfycbxkOitPmTT96EcgbV3vk4H7NApg9thvLi0QAlm5cHybwuuRBU1ainD11S9bNyGNynWl/exec',
   },
 
   // ───────────────────────────────────────────────────────────

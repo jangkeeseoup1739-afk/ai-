@@ -68,24 +68,62 @@ describe('상담 신청 폼', () => {
     expect(screen.queryByText('상담 신청이 접수되었습니다')).not.toBeInTheDocument();
   });
 
-  it('구글 Apps Script 주소면 text/plain 으로 전송, 응답 ok:false 는 실패 처리', async () => {
-    const url = 'https://script.google.com/macros/s/abc/exec';
-    const fetchSpy = vi.fn().mockResolvedValue(new Response('{"ok":false,"error":"validation"}', { status: 200 }));
+  const APPS_SCRIPT = 'https://script.google.com/macros/s/abc/exec';
+
+  it('구글 Apps Script: 기존 홈페이지와 같은 형식(text/plain JSON)으로 전송 → 접수 완료', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('{"ok":true}', { status: 200 }));
     vi.stubGlobal('fetch', fetchSpy);
-    render(<ConsultForm endpoint={url} />);
+    render(<ConsultForm endpoint={APPS_SCRIPT} />);
+    await fillValid();
+    await userEvent.selectOptions(screen.getByLabelText('관심 층'), '3f');
+    await userEvent.type(screen.getByLabelText(/문의 내용/), '30평대 문의');
+    await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
+    expect(await screen.findByText('상담 신청이 접수되었습니다')).toBeInTheDocument();
+
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(url).toBe(APPS_SCRIPT);
+    expect(init.headers['Content-Type']).toMatch(/^text\/plain/);
+    const lead = JSON.parse(init.body);
+    expect(lead).toMatchObject({
+      name: '홍길동',
+      phone: '010-1234-5678',
+      interestCategory: '관심 층: 지상 3층',
+      preferredType: '상담 목적: 임대',
+      preferredTime: '',
+      message: '30평대 문의',
+      privacyAgreed: true,
+    });
+    expect(lead.id).toMatch(/^LP-\d{6}$/);
+    expect(typeof lead.createdAt).toBe('string');
+  });
+
+  it('구글 Apps Script: 응답 ok:false 면 실패 표시', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":false,"error":"name_and_phone_required"}', { status: 200 })));
+    render(<ConsultForm endpoint={APPS_SCRIPT} />);
     await fillValid();
     await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
     expect(await screen.findByText(/접수가 처리되지 않았습니다/)).toBeInTheDocument();
-    expect(fetchSpy.mock.calls[0][1].headers['Content-Type']).toMatch(/^text\/plain/);
-    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toMatchObject({ name: '홍길동', purpose: '임대' });
   });
 
-  it('구글 Apps Script 응답 ok:true 면 접수 완료', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', { status: 200 })));
-    render(<ConsultForm endpoint="https://script.google.com/macros/s/abc/exec" />);
+  it('구글 Apps Script: 응답을 못 읽으면 no-cors 로 같은 접수번호를 한 번 더 전송', async () => {
+    const fetchSpy = vi.fn().mockRejectedValueOnce(new TypeError('cors')).mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    render(<ConsultForm endpoint={APPS_SCRIPT} />);
     await fillValid();
     await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
     expect(await screen.findByText('상담 신청이 접수되었습니다')).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[1][1].mode).toBe('no-cors');
+    expect(fetchSpy.mock.calls[1][1].body).toBe(fetchSpy.mock.calls[0][1].body); // 같은 접수번호 → 시트에서 중복 제거
+  });
+
+  it('구글 Apps Script: 두 번 다 실패하면 오류 표시', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+    render(<ConsultForm endpoint={APPS_SCRIPT} />);
+    await fillValid();
+    await userEvent.click(screen.getByRole('button', { name: '상담 신청하기' }));
+    expect(await screen.findByText(/네트워크 오류/)).toBeInTheDocument();
+    expect(screen.queryByText('상담 신청이 접수되었습니다')).not.toBeInTheDocument();
   });
 
   it('네트워크 오류 처리', async () => {

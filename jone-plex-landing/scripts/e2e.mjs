@@ -179,10 +179,22 @@ try {
     check((await page.getByRole('dialog').textContent()).includes('개인정보 수집 및 이용 안내'), '개인정보 전문 보기 팝업');
     await page.getByRole('dialog').getByRole('button', { name: '확인' }).click();
     await form.getByLabel(/개인정보 수집 및 이용에 동의/).check();
+    // 실제 구글 시트에 테스트 줄이 쌓이지 않도록 전송을 가로채서 내용만 확인
+    let sentLead = null;
+    await page.route('https://script.google.com/**', async (route) => {
+      sentLead = JSON.parse(route.request().postData() || 'null');
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}', headers: { 'Access-Control-Allow-Origin': '*' } });
+    });
     await form.getByRole('button', { name: '상담 신청하기' }).click();
-    await page.waitForTimeout(300);
+    await page.getByText('상담 신청이 접수되었습니다').waitFor({ timeout: 5000 }).catch(() => {});
     const formText = await page.locator('#consult').textContent();
-    check(formText.includes('신청서는 전송되지 않았습니다') && !formText.includes('상담 신청이 접수되었습니다'), '테스트 모드: 접수 완료로 표시하지 않음');
+    check(!formText.includes('테스트 모드'), '테스트 모드 해제 (접수 주소 연결됨)');
+    check(formText.includes('상담 신청이 접수되었습니다'), '상담 신청 → 접수 완료 표시');
+    check(
+      sentLead && sentLead.name === '테스트' && sentLead.phone === '010-1234-5678' && /^LP-\d{6}$/.test(sentLead.id) &&
+        sentLead.preferredType === '상담 목적: 실사용' && sentLead.privacyAgreed === true,
+      `기존 홈페이지와 같은 형식으로 전송 ${JSON.stringify(sentLead)}`,
+    );
 
     check(await page.locator('nav[aria-label="빠른 상담"]').last().isVisible(), 'PC 플로팅 상담 버튼 표시');
 
