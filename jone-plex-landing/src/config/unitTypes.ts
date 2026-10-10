@@ -59,7 +59,7 @@ export const unitTypes: UnitType[] = [
     id: 'type-b',
     title: 'B 타입',
     floorsLabel: '8~9층',
-    image: null,
+    image: '/images/types/b.webp',
     imageAlt: '오피스텔형 기숙사 B 타입 아이소 평면도',
     variants: [{ name: 'B type', count: 6 }],
     areas: [
@@ -94,7 +94,7 @@ export const unitTypes: UnitType[] = [
     id: 'type-d',
     title: 'D 타입 (복층)',
     floorsLabel: '10층',
-    image: null,
+    image: '/images/types/d.webp',
     imageAlt: '오피스텔형 기숙사 D 복층 타입 아이소 평면도',
     variants: [{ name: 'D type', count: 4 }],
     areas: [
@@ -110,7 +110,7 @@ export const unitTypes: UnitType[] = [
     id: 'type-e',
     title: 'E 타입',
     floorsLabel: '9층',
-    image: null,
+    image: '/images/types/e.webp',
     imageAlt: '오피스텔형 기숙사 E 타입 아이소 평면도',
     variants: [{ name: 'E type', count: 2 }],
     areas: [
