@@ -48,7 +48,7 @@ export function FloorGuideSection({ onConsultFloor }: FloorGuideSectionProps) {
       <div
         role="tablist"
         aria-label="층 선택"
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-6"
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0"
       >
         {floors.map((floor, i) => {
           const selected = floor.id === active.id;
@@ -64,9 +64,13 @@ export function FloorGuideSection({ onConsultFloor }: FloorGuideSectionProps) {
               aria-selected={selected}
               aria-controls="floor-panel"
               tabIndex={selected ? 0 : -1}
-              onClick={() => setActiveId(floor.id)}
+              onClick={(e) => {
+                setActiveId(floor.id);
+                // 모바일 가로 스크롤 탭에서 누른 탭이 화면 안에 보이도록
+                e.currentTarget.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+              }}
               onKeyDown={(e) => onTabKeyDown(e, i)}
-              className={`shrink-0 whitespace-nowrap rounded-2xl border px-5 py-3.5 text-base font-bold transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-2xl border px-4 py-3.5 text-base font-bold transition-colors ${
                 selected
                   ? 'border-navy-900 bg-navy-900 text-white shadow-card'
                   : 'border-navy-100 bg-white text-navy-700 hover:border-gold-400 hover:text-navy-900'
