@@ -10,11 +10,9 @@ import { siteConfig } from '../config/site';
 import { SECTION, mapLinks } from '../lib/links';
 import { Icon } from './Icons';
 import { Section } from './Section';
-import { useSetupNotice } from './SetupNotice';
 
 export function LocationSection() {
-  const { address, areaLabel, mapImages } = siteConfig.location;
-  const showNotice = useSetupNotice();
+  const { address, addressJibun, areaLabel, mapImages } = siteConfig.location;
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'fail'>('idle');
 
   const copyAddress = async () => {
@@ -45,6 +43,7 @@ export function LocationSection() {
           {address ? (
             <>
               <p className="mt-1 text-xl font-bold leading-snug">{address}</p>
+              {addressJibun && <p className="mt-1 text-[15px] text-navy-200">(지번) {addressJibun}</p>}
               <button
                 type="button"
                 onClick={copyAddress}
@@ -61,10 +60,10 @@ export function LocationSection() {
             </>
           )}
 
+          {mapLinks.length > 0 && (
           <div className="mt-auto pt-8">
             <p className="mb-3 text-sm font-semibold text-gold-300">지도 보기</p>
-            {mapLinks.length > 0 ? (
-              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 {mapLinks.map((m) => (
                   <a
                     key={m.key}
@@ -78,18 +77,9 @@ export function LocationSection() {
                     <Icon name="external" className="h-4 w-4" />
                   </a>
                 ))}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => showNotice('map')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3.5 text-base font-bold text-navy-900 hover:bg-gold-100"
-              >
-                <Icon name="pin" className="h-5 w-5" />
-                지도 보기
-              </button>
-            )}
+            </div>
           </div>
+          )}
         </div>
 
         {/* ── 교통 안내 ── */}

@@ -11,6 +11,7 @@ export function Footer() {
     { label: '상호', value: p.operatorName },
     { label: '대표', value: p.representative },
     { label: '사업자등록번호', value: p.businessNumber },
+    { label: '현장 주소', value: siteConfig.location.address },
     { label: '상담 전화', value: phoneDisplay },
     { label: '상담 시간', value: siteConfig.contact.businessHours },
     { label: '담당', value: siteConfig.contact.managerName },

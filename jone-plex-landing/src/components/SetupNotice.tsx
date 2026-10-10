@@ -1,8 +1,9 @@
 /**
  * "설정 필요" 안내창
  *
- * 카카오톡 채널·지도 주소 등이 site.ts 에 아직 입력되지 않았을 때
- * 가짜 링크로 이동시키는 대신 이 안내창을 띄웁니다.
+ * 카카오톡 채널 주소 등이 site.ts 에 아직 입력되지 않았을 때
+ * 가짜 링크로 이동시키는 대신 이 안내창을 띄웁니다. (방문자용 문구만 표시)
+ * 설정 위치: 카카오톡 → site.ts 의 contact.kakaoChannelUrl, 전화 → contact.phone
  *
  * 사용법:
  *   const showNotice = useSetupNotice();
@@ -18,11 +19,6 @@ const NOTICES = {
     title: '카카오톡 상담 준비 중',
     body: '카카오톡 채널 주소가 아직 연결되지 않았습니다.',
     setting: 'src/config/site.ts → contact.kakaoChannelUrl',
-  },
-  map: {
-    title: '지도 링크 준비 중',
-    body: '현장 지도 주소가 아직 연결되지 않았습니다. 정확한 위치는 전화로 안내해 드립니다.',
-    setting: 'src/config/site.ts → location.maps (naver / kakao / google)',
   },
   phone: {
     title: '전화 상담 준비 중',
@@ -54,11 +50,6 @@ export function SetupNoticeProvider({ children }: { children: ReactNode }) {
             로 전화 주세요.
           </p>
         )}
-        <p className="mt-4 rounded-xl bg-navy-50 p-3 text-sm text-navy-700">
-          <span className="font-semibold">운영자 설정 위치</span>
-          <br />
-          <code className="break-all">{notice?.setting}</code>
-        </p>
       </Modal>
     </SetupNoticeContext.Provider>
   );

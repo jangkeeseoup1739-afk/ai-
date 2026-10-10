@@ -155,10 +155,9 @@ try {
     await page.keyboard.press('Escape');
     check((await page.getByRole('dialog').count()) === 0, 'ESC 로 안내창 닫힘');
 
-    // 지도 보기(미설정) → 안내창
-    await page.getByRole('button', { name: '지도 보기' }).click();
-    check((await page.getByRole('dialog').textContent()).includes('location.maps'), '지도 보기(미설정) → 설정 안내창');
-    await page.getByRole('dialog').getByRole('button', { name: '확인' }).click();
+    // 지도 링크: 주소 검색 링크 3개, 새 창
+    const mapHrefs = await page.locator('#location a[href^="https://map"], #location a[href^="https://www.google.com/maps"]').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+    check(mapHrefs.length === 3 && mapHrefs.every((h) => h.includes(encodeURIComponent('주염로73번길 54'))), '지도 보기 링크 3개 (현장 주소 검색)');
 
     // 상담 폼 검증
     const form = page.getByRole('form', { name: '분양 상담 신청서' });

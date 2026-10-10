@@ -21,14 +21,19 @@ export const phoneDisplay = siteConfig.contact.phone.trim();
 export const kakaoHref = isHttpUrl(siteConfig.contact.kakaoChannelUrl) ? siteConfig.contact.kakaoChannelUrl : null;
 export const blogHref = isHttpUrl(siteConfig.contact.naverBlogUrl) ? siteConfig.contact.naverBlogUrl : null;
 
-/** 설정된 지도 링크만 골라 돌려줍니다. */
-export const mapLinks = (
-  [
-    { key: 'naver', label: '네이버 지도', href: siteConfig.location.maps.naver },
-    { key: 'kakao', label: '카카오맵', href: siteConfig.location.maps.kakao },
-    { key: 'google', label: '구글 지도', href: siteConfig.location.maps.google },
-  ] as const
-).filter((m) => isHttpUrl(m.href));
+/**
+ * 지도 링크 – site.ts 에 직접 넣은 링크가 있으면 그것을, 없으면 현장 주소로 검색하는 링크를 씁니다.
+ * 주소도 없으면 버튼을 만들지 않습니다.
+ */
+const addressQuery = encodeURIComponent(siteConfig.location.address.trim());
+const mapUrl = (custom: string, searchBase: string) =>
+  isHttpUrl(custom) ? custom : addressQuery ? searchBase + addressQuery : '';
+
+export const mapLinks = [
+  { key: 'naver', label: '네이버 지도', href: mapUrl(siteConfig.location.maps.naver, 'https://map.naver.com/p/search/') },
+  { key: 'kakao', label: '카카오맵', href: mapUrl(siteConfig.location.maps.kakao, 'https://map.kakao.com/link/search/') },
+  { key: 'google', label: '구글 지도', href: mapUrl(siteConfig.location.maps.google, 'https://www.google.com/maps/search/?api=1&query=') },
+].filter((m) => isHttpUrl(m.href));
 
 /** 상담 폼 전송 주소 (Vercel 환경변수 VITE_CONSULT_ENDPOINT 가 있으면 우선) */
 export function getFormEndpoint(): string {

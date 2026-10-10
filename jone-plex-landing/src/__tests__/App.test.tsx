@@ -23,7 +23,8 @@ describe('랜딩페이지 전체', () => {
     const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
     await userEvent.click(within(hero).getByRole('button', { name: /카카오톡 상담/ }));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('kakaoChannelUrl');
+    expect(dialog).toHaveTextContent('카카오톡 상담 준비 중');
+    expect(dialog).not.toHaveTextContent('site.ts'); // 방문자에게 코드 경로를 보여주지 않음
     await userEvent.click(within(dialog).getByRole('button', { name: '확인' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -64,10 +65,15 @@ describe('랜딩페이지 전체', () => {
     expect(screen.getByLabelText('관심 층')).toHaveValue('3f');
   });
 
-  it('지도 링크 미설정 시 지도 보기 버튼은 안내창을 연다', async () => {
+  it('현장 주소와 지도 링크(네이버·카카오·구글, 새 창)', () => {
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: '지도 보기' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('location.maps');
+    const loc = document.getElementById('location')!;
+    expect(loc).toHaveTextContent('인천광역시 미추홀구 주염로73번길 54');
+    expect(loc).toHaveTextContent('주안동 3-26');
+    const q = encodeURIComponent('인천광역시 미추홀구 주염로73번길 54');
+    expect(within(loc).getByRole('link', { name: /네이버 지도/ })).toHaveAttribute('href', `https://map.naver.com/p/search/${q}`);
+    expect(within(loc).getByRole('link', { name: /카카오맵/ })).toHaveAttribute('href', `https://map.kakao.com/link/search/${q}`);
+    expect(within(loc).getByRole('link', { name: /구글 지도/ })).toHaveAttribute('target', '_blank');
   });
 });
 
