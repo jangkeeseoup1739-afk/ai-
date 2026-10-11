@@ -276,6 +276,7 @@ vercel --prod   # 운영 배포
 - [x] `site.ts` → `seo.siteUrl` 에 실제 주소 입력 (canonical·og:url·OG 이미지 절대주소 자동 생성) 후 재배포
 - [x] [네이버 서치어드바이저](https://searchadvisor.naver.com) → 사이트 등록 → HTML 태그 소유확인 코드를 `seo.naverSiteVerification` 에 입력 후 재배포
 - [ ] 네이버 서치어드바이저 → 요청 → 사이트맵 제출에 `sitemap.xml` 등록 (빌드할 때 `seo.siteUrl` 기준으로 자동 생성됩니다)
+- [ ] [구글 서치콘솔](https://search.google.com/search-console) → URL 접두어로 속성 추가 → 소유권 확인 (`public/google*.html` 파일 방식, 확인 후에도 파일을 지우면 안 됩니다) → Sitemaps 에 `sitemap.xml` 제출
 - [ ] 휴대폰으로 접속해 전화·카카오톡·상담 신청 버튼 직접 눌러 보기
 - [ ] 상담 폼으로 실제 테스트 신청 1건 보내고 메일/시트에 들어오는지 확인
 
