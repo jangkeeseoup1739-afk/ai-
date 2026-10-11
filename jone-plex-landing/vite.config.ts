@@ -47,8 +47,55 @@ function seoHtmlPlugin(): Plugin {
   };
 }
 
+/**
+ * 빌드 결과(dist)에 sitemap.xml 을 만들고, robots.txt 끝에 그 위치를 적어 둡니다.
+ * → 네이버 서치어드바이저·구글 서치콘솔에 사이트맵으로 제출할 수 있습니다.
+ * site.ts 의 seo.siteUrl 이 비어 있으면 아무것도 만들지 않습니다. (가짜 주소 금지)
+ */
+function sitemapPlugin(): Plugin {
+  const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, '');
+  let outDir = 'dist';
+  let isSsr = false;
+
+  return {
+    name: 'seo-sitemap',
+    apply: 'build',
+    configResolved(config) {
+      outDir = config.build.outDir;
+      // SSR 빌드(dist-ssr)는 중간 산출물이라 건너뜁니다.
+      isSsr = Boolean(config.build.ssr);
+    },
+    async closeBundle() {
+      if (isSsr || !siteUrl) return;
+      const { readFile, writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+
+      // 한 장짜리 페이지라 주소는 메인 하나입니다.
+      const lastmod = new Date().toISOString().slice(0, 10);
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${siteUrl}/</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+      await writeFile(join(outDir, 'sitemap.xml'), sitemap, 'utf8');
+
+      const robotsPath = join(outDir, 'robots.txt');
+      const robots = await readFile(robotsPath, 'utf8');
+      if (!robots.includes('Sitemap:')) {
+        await writeFile(robotsPath, `${robots.trimEnd()}\n\nSitemap: ${siteUrl}/sitemap.xml\n`, 'utf8');
+      }
+      console.log(`\u2713 sitemap.xml 생성: ${siteUrl}/sitemap.xml`);
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), seoHtmlPlugin()],
+  plugins: [react(), seoHtmlPlugin(), sitemapPlugin()],
   build: {
     // 이미지가 4KB 이하면 인라인 처리 → 요청 수 감소
     assetsInlineLimit: 4096,

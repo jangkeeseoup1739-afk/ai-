@@ -39,7 +39,7 @@ export const siteConfig = {
      * 실제 배포 주소 (예: 'https://j1plex.co.kr')
      * 입력하면 canonical·og:url 태그와 OG 이미지 절대주소가 자동 생성됩니다.
      */
-    siteUrl: '',
+    siteUrl: 'https://jone-plex-landing.vercel.app',
     /** 공유 미리보기 이미지 (public 폴더 기준 경로, 1200×630 권장) */
     ogImage: '/og-image.png',
     /** 네이버 서치어드바이저 → 사이트 소유확인 → HTML 태그의 content 값 */
