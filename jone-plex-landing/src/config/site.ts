@@ -43,7 +43,7 @@ export const siteConfig = {
     /** 공유 미리보기 이미지 (public 폴더 기준 경로, 1200×630 권장) */
     ogImage: '/og-image.png',
     /** 네이버 서치어드바이저 → 사이트 소유확인 → HTML 태그의 content 값 */
-    naverSiteVerification: '',
+    naverSiteVerification: 'ade71e11e39d21bed40f7740f1ab39b605ff9691',
   },
 
   // ───────────────────────────────────────────────────────────
